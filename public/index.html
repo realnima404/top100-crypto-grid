@@ -204,4 +204,14 @@ $("#coinSearch").oninput=e=>{clearTimeout(searchTimer);const q=e.target.value.tr
 async function searchCoins(q){
  results.innerHTML='<div class="msg" style="height:55px">Searching…</div>';
  try{
-   const r=awa
+   const r=await fetch("https://api.coingecko.com/api/v3/search?query="+encodeURIComponent(q)); if(!r.ok)throw Error("Search failed");
+   const j=await r.json();
+   const found=(j.coins||[]).slice(0,15).map(x=>({id:x.id,name:x.name,symbol:String(x.symbol).toUpperCase(),rank:x.market_cap_rank||null}));
+   results.innerHTML=found.length?found.map((c,i)=>`<div class="search-item"><span><b>${esc(c.symbol)}</b> <small>${esc(c.name)}</small></span><button data-add="${i}">＋ Add</button></div>`).join(""):'<div class="msg" style="height:55px">No results</div>';
+   results.querySelectorAll("[data-add]").forEach(b=>b.onclick=async()=>{const c=await resolveCoin(found[+b.dataset.add]);if(!c)return alert("This coin has no supported Binance/Bybit USDT spot market.");addToActive(c);});
+ }catch(e){results.innerHTML='<div class="msg" style="height:55px">Search unavailable</div>'}
+}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")panel.classList.remove("show")});
+renderWatchUI();renderWatchTabs();refreshTop().catch(e=>{setStatus("Error");grid.innerHTML=`<div style="padding:20px;color:#ef8d8d">${esc(e.message)}</div>`});
+</script>
+</body></html>

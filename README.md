@@ -1,11 +1,26 @@
-# Top 100 Crypto Grid V5
+# Top 100 Crypto Grid V7
 
-- Top 100 excluding stablecoins.
-- Binance USDT preferred, Bybit USDT fallback; unavailable markets removed.
-- Timeframes: 15m, 1H, 4H only.
-- 200 candles loaded; roughly 45 visible initially with two-candle right offset.
-- Volume shown on every chart.
-- Grid background guides removed.
-- Favorites persisted in browser localStorage.
-- Custom watchlists: create, delete, select, and add coins from the loaded market universe.
-- Compact mode.
+## New in V6
+- Independent Favorites tab
+- Custom watchlists
+- Search across CoinGecko's full coin universe, not only Top 100
+- Add search results directly to any watchlist
+- In-memory chart data cache
+- DOM/chart view cache: switching Top 100 / Favorites / Watchlists does not rebuild already loaded charts
+- Lazy loading: charts load only when they approach the viewport
+- Timeframes: 15m, 1H, 4H
+- 200 candles loaded, ~45 visible initially
+- Binance USDT preferred, Bybit USDT fallback
+- Stablecoins excluded from Top 100
+- Volume displayed
+- No chart background guide lines
+- Two-candle right-side padding
+- Browser-persistent favorites and watchlists
+
+## Deploy
+Node / main / root directory blank / build `npm install` / start `npm start`
+
+- Watchlists are independent top-level tabs beside Favorites.
+- Watchlist tabs render their own chart grids.
+- Watchlist management is in a separate plus button.
+- Chart attribution/branding is hidden.
