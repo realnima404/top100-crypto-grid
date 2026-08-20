@@ -2,57 +2,206 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Top 100 Crypto Grid</title>
+<title>Crypto Scanner V6</title>
 <script src="https://unpkg.com/lightweight-charts@5.0.0/dist/lightweight-charts.standalone.production.js"></script>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#0b0f14;color:#d7dde7;font-family:Inter,Segoe UI,Arial,sans-serif}
-header{position:sticky;top:0;z-index:10;background:#0b0f14ee;backdrop-filter:blur(10px);border-bottom:1px solid #202833;padding:10px}
-.controls{display:flex;gap:7px;align-items:center;flex-wrap:wrap}button,input,select{background:#131a22;color:#d7dde7;border:1px solid #303b49;border-radius:7px;padding:7px 9px}button{cursor:pointer}button:hover{background:#1a2330}input{width:220px}.status{font-size:12px;color:#8e9aaa;margin-left:auto}.title{font-weight:800;margin-right:4px}
-.grid{display:grid;grid-template-columns:repeat(5,minmax(220px,1fr));gap:6px;padding:6px}.card{height:275px;background:#10161e;border:1px solid #202a35;border-radius:6px;overflow:hidden;position:relative}.head{height:34px;padding:6px 8px;display:flex;justify-content:space-between;align-items:center;font-size:12px;border-bottom:1px solid #202a35}.head-left{display:flex;align-items:center;min-width:0}.rank{color:#748094;margin-right:6px}.symbol{font-weight:700;color:#eef2f7}.price{color:#9eabbc}.exchange{font-size:10px;color:#687689;margin-left:6px}.fav,.wladd{border:0;background:transparent;padding:0 3px;margin-left:5px;line-height:1;cursor:pointer}.fav{font-size:18px;color:#566274}.fav:hover,.fav.active{color:#f5c84b;background:transparent}.wladd{font-size:16px;color:#566274}.wladd:hover{color:#6fc7ff;background:transparent}.chart{height:242px}.msg{height:100%;display:grid;place-items:center;color:#667386;font-size:12px}.tv-lightweight-charts a{display:none!important}
-@media(max-width:1300px){.grid{grid-template-columns:repeat(4,minmax(220px,1fr))}}@media(max-width:1050px){.grid{grid-template-columns:repeat(3,minmax(220px,1fr))}}@media(max-width:760px){.grid{grid-template-columns:repeat(2,minmax(180px,1fr))}.card{height:260px}.chart{height:228px}}@media(max-width:480px){.grid{grid-template-columns:1fr}.status{margin-left:0}}
+header{position:sticky;top:0;z-index:50;background:#0b0f14f2;backdrop-filter:blur(10px);border-bottom:1px solid #202833;padding:10px}
+.controls{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.title{font-weight:850;margin-right:8px}
+button,input,select{background:#131a22;color:#d7dde7;border:1px solid #303b49;border-radius:7px;padding:8px 10px}button{cursor:pointer}button:hover{background:#1a2330}
+button.active{border-color:#5d9cff;color:#fff;background:#18263b}.status{font-size:12px;color:#8e9aaa;margin-left:auto}.primary{border-color:#426d9e}
+.grid{display:grid;grid-template-columns:repeat(5,minmax(220px,1fr));gap:6px;padding:6px}.card{height:275px;background:#10161e;border:1px solid #202a35;border-radius:7px;overflow:hidden;position:relative}.head{height:34px;padding:6px 8px;display:flex;justify-content:space-between;align-items:center;font-size:12px;border-bottom:1px solid #202a35}.head-left{display:flex;align-items:center;min-width:0}.rank{color:#748094;margin-right:6px}.symbol{font-weight:700;color:#eef2f7}.price{color:#9eabbc}.exchange{font-size:10px;color:#687689;margin-left:5px}.fav,.wladd{border:0;background:transparent;padding:0 3px;margin-left:5px;line-height:1;cursor:pointer}.fav{font-size:18px;color:#566274}.fav.active{color:#f5c84b}.wladd{font-size:16px;color:#566274}.chart{height:241px}.msg{height:100%;display:grid;place-items:center;color:#667386;font-size:12px}
+.panel{display:none;position:fixed;right:14px;top:60px;z-index:100;width:min(410px,calc(100vw - 28px));max-height:80vh;overflow:auto;background:#10161e;border:1px solid #303b49;border-radius:10px;padding:12px;box-shadow:0 12px 40px #0008}.panel.show{display:block}.panel h3{margin:0 0 10px}.panel-row{display:flex;gap:7px;margin-bottom:8px}.panel-row input,.panel-row select{flex:1;min-width:0}.search-results{border-top:1px solid #202a35;margin-top:8px}.search-item{display:flex;justify-content:space-between;align-items:center;padding:9px 2px;border-bottom:1px solid #18212b}.search-item small{color:#778598}.watch-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #18212b}.watch-row button{padding:4px 7px}
+.hidden{display:none!important}@media(max-width:1300px){.grid{grid-template-columns:repeat(4,minmax(220px,1fr))}}@media(max-width:1050px){.grid{grid-template-columns:repeat(3,minmax(220px,1fr))}}@media(max-width:760px){.grid{grid-template-columns:repeat(2,minmax(180px,1fr))}.card{height:260px}.chart{height:226px}.status{margin-left:0}}@media(max-width:480px){.grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <header><div class="controls">
-<span class="title">CRYPTO SCANNER</span>
-<select id="view"><option value="top">Top 100</option><option value="favorites">★ Favorites</option></select>
-<select id="watchlist"><option value="">No watchlist</option></select>
-<button id="newWatchlist">＋ Watchlist</button><button id="deleteWatchlist">Delete list</button>
+<b class="title">CRYPTO SCANNER</b>
+<button class="tab active" data-view="top">Top 100</button>
+<button class="tab" data-view="favorites">★ Favorites</button>
+<button id="watchBtn">📋 Watchlists</button>
 <select id="timeframe"><option value="15m">15m</option><option value="1h" selected>1H</option><option value="4h">4H</option></select>
-<select id="source"><option value="coingecko">CoinGecko Top 100</option><option value="cmc">CoinMarketCap Top 100</option></select>
-<input id="cmcKey" placeholder="CMC API key (CMC mode)" style="display:none">
-<button id="load">Refresh</button><button id="compact">Compact</button><span id="status" class="status">Ready</span>
+<button id="refresh">Refresh data</button>
+<button id="compact">Compact</button>
+<select id="source"><option value="coingecko">CoinGecko ranking</option><option value="cmc">CoinMarketCap ranking</option></select>
+<input id="cmcKey" class="hidden" placeholder="CMC API key">
+<span id="status" class="status">Starting…</span>
 </div></header>
+
+<div id="watchPanel" class="panel">
+<h3>📋 Watchlists</h3>
+<div class="panel-row"><input id="newListName" placeholder="New watchlist name"><button id="createList">Create</button></div>
+<div class="panel-row"><select id="activeList"></select><button id="deleteList">Delete</button></div>
+<h3 style="margin-top:16px">Search any coin</h3>
+<div class="panel-row"><input id="coinSearch" placeholder="BTC, Solana, Pendle…"></div>
+<div id="searchResults" class="search-results"></div>
+<div id="watchContents"></div>
+</div>
+
 <main id="grid" class="grid"></main>
+
 <script>
-const grid=document.getElementById('grid'),statusEl=document.getElementById('status'),sourceEl=document.getElementById('source'),keyEl=document.getElementById('cmcKey'),viewEl=document.getElementById('view'),wlEl=document.getElementById('watchlist'),tfEl=document.getElementById('timeframe');
-let compact=false, allCoins=[];
-const LS={fav:'top100CryptoFavorites',lists:'top100CryptoWatchlists'};
+const $=s=>document.querySelector(s);
+const grid=$("#grid"), statusEl=$("#status"), tfEl=$("#timeframe"), sourceEl=$("#source"), cmcKey=$("#cmcKey");
+const LS={fav:"cryptoV6Favorites",lists:"cryptoV6Watchlists",lastList:"cryptoV6LastList"};
+let allTop=[], currentView="top", compact=false;
+const chartDataCache=new Map();   // exchange|pair|timeframe -> candle data
+const chartDomCache=new Map();    // symbol|timeframe -> already-built chart card
+const exchangeMapCache={};
+
+const stableSymbols=new Set(["USDT","USDC","FDUSD","TUSD","USDE","DAI","USDS","USDD","PYUSD","USD1","USDP","GUSD","FRAX","LUSD","USTC","EURC","EURT","EURS","USDB","USDY","USDM","USDX","RLUSD"]);
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
 const read=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch{return d}};
 const write=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-function favorites(){return new Set(read(LS.fav,[]).map(String))}
-function lists(){return read(LS.lists,{})}
-function stable(s,n=''){s=String(s||'').toUpperCase();n=String(n||'').toLowerCase();return new Set(['USDT','USDC','FDUSD','TUSD','USDE','DAI','USDS','USDD','PYUSD','USD1','USDP','GUSD','FRAX','LUSD','USTC','EURC','EURT','EURS','USDB','USDY','USDM','USDX','RLUSD','USYC','CUSD','USDK','USN']).has(s)||/stablecoin|usd coin|tether|dai/.test(n)}
-function setStatus(x){statusEl.textContent=x}
-sourceEl.onchange=()=>keyEl.style.display=sourceEl.value==='cmc'?'':'none';
-function refreshWatchlistUI(){let ls=lists(),current=wlEl.value;wlEl.innerHTML='<option value="">No watchlist</option>'+Object.keys(ls).map(n=>`<option value="${esc(n)}">${esc(n)} (${ls[n].length})</option>`).join('');if(ls[current])wlEl.value=current;}
-function esc(x){return String(x).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-async function getCoins(){
- if(sourceEl.value==='cmc'){let k=keyEl.value.trim();if(!k)throw Error('Enter your CoinMarketCap API key.');let r=await fetch('/api/cmc?key='+encodeURIComponent(k)),j=await r.json();if(!r.ok)throw Error(j.status?.error_message||j.error||'CMC request failed');return j.data.filter(x=>!stable(x.symbol,x.name)).map(x=>({rank:x.cmc_rank,name:x.name,symbol:x.symbol}))}
- let r=await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false');if(!r.ok)throw Error('CoinGecko request failed');let j=await r.json();return j.filter(x=>!stable(x.symbol,x.name)).map(x=>({rank:x.market_cap_rank,name:x.name,symbol:x.symbol.toUpperCase()}));
+const favs=()=>new Set(read(LS.fav,[]).map(String));
+const lists=()=>read(LS.lists,{});
+const setStatus=s=>statusEl.textContent=s;
+function isStable(s,n=""){return stableSymbols.has(String(s).toUpperCase())||/stablecoin|usd coin|tether|dai/.test(String(n).toLowerCase())}
+
+function coinKey(c){return c.id ? `cg:${c.id}` : `sym:${c.symbol}`}
+function saveFavorites(s){write(LS.fav,[...s])}
+function renderTabs(){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.view===currentView))}
+
+async function getTop(){
+  if(sourceEl.value==="cmc"){
+    const key=cmcKey.value.trim(); if(!key) throw Error("Enter CoinMarketCap API key.");
+    const r=await fetch("/api/cmc?key="+encodeURIComponent(key)),j=await r.json();
+    if(!r.ok) throw Error(j.status?.error_message||j.error||"CMC request failed");
+    return j.data.filter(x=>!isStable(x.symbol,x.name)).map(x=>({id:String(x.id),rank:x.cmc_rank,name:x.name,symbol:x.symbol.toUpperCase()}));
+  }
+  const r=await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false");
+  if(!r.ok) throw Error("CoinGecko request failed");
+  const j=await r.json();
+  return j.filter(x=>!isStable(x.symbol,x.name)).map(x=>({id:x.id,rank:x.market_cap_rank,name:x.name,symbol:x.symbol.toUpperCase()}));
 }
-async function exmap(exchange){let url=exchange==='Binance'?'https://api.binance.com/api/v3/exchangeInfo':'https://api.bybit.com/v5/market/instruments-info?category=spot&limit=1000';let r=await fetch(url);if(!r.ok)throw Error(exchange+' instruments request failed');let j=await r.json(),m=new Map();if(exchange==='Binance'){for(let x of j.symbols||[])if(x.status==='TRADING'&&x.quoteAsset==='USDT')m.set(x.baseAsset.toUpperCase(),x.symbol)}else for(let x of j.result?.list||[])if(x.status==='Trading'&&x.quoteCoin==='USDT')m.set(x.baseCoin.toUpperCase(),x.symbol);return m}
-function intervalCfg(tf){return tf==='15m'?{bin:'15m',by:'15',limit:200}:{bin:tf,by:tf==='1h'?'60':'240',limit:200}}
-async function klines(ex,sym,tf){let c=intervalCfg(tf),url=ex==='Binance'?`https://api.binance.com/api/v3/klines?symbol=${sym}&interval=${c.bin}&limit=${c.limit}`:`https://api.bybit.com/v5/market/kline?category=spot&symbol=${sym}&interval=${c.by}&limit=${c.limit}`;let r=await fetch(url);if(!r.ok)throw Error(ex+' data unavailable');let j=await r.json();if(ex==='Bybit'&&j.retCode!==0)throw Error('Bybit data unavailable');let a=ex==='Binance'?j:(j.result?.list||[]);return a.map(x=>({time:Math.floor(Number(x[0])/1000),open:+x[1],high:+x[2],low:+x[3],close:+x[4],volume:+x[5]})).sort((a,b)=>a.time-b.time)}
-function card(c){let f=favorites();return `<section class="card" id="card-${esc(c.key)}"><div class="head"><div class="head-left"><span class="rank">#${c.rank}</span><span class="symbol">${esc(c.symbol)}</span><button class="fav ${f.has(c.symbol)?'active':''}" data-symbol="${esc(c.symbol)}" title="${f.has(c.symbol)?'Remove from favorites':'Add to favorites'}">★</button><button class="wladd" data-symbol="${esc(c.symbol)}" title="Add to selected watchlist">＋</button><span class="exchange">${c.exchange}</span></div><span class="price">loading…</span></div><div class="chart"><div class="msg">Loading chart…</div></div></section>`}
-async function draw(cardEl,sym,ex,tf){let box=cardEl.querySelector('.chart');box.innerHTML='';let chart=LightweightCharts.createChart(box,{width:box.clientWidth,height:box.clientHeight,layout:{background:{type:'solid',color:'#10161e'},textColor:'#6f7d90'},grid:{vertLines:{visible:false},horzLines:{visible:false}},rightPriceScale:{borderColor:'#202a35',scaleMargins:{top:0.08,bottom:0.30}},timeScale:{borderColor:'#202a35',timeVisible:true,secondsVisible:false,rightOffset:2,barSpacing:6},crosshair:{mode:2,vertLine:{visible:false},horzLine:{visible:false}},attributionLogo:false});let ser=chart.addSeries(LightweightCharts.CandlestickSeries,{upColor:'#26a69a',downColor:'#ef5350',borderUpColor:'#26a69a',borderDownColor:'#ef5350',wickUpColor:'#26a69a',wickDownColor:'#ef5350'}),rows=await klines(ex,sym,tf);ser.setData(rows);let vol=chart.addSeries(LightweightCharts.HistogramSeries,{priceFormat:{type:'volume'},priceScaleId:'volume',priceLineVisible:false,lastValueVisible:false});vol.priceScale().applyOptions({scaleMargins:{top:0.78,bottom:0.03}});vol.setData(rows.map(x=>({time:x.time,value:x.volume||0,color:x.close>=x.open?'#26a69a55':'#ef535055'})));let n=Math.min(45,rows.length);chart.timeScale().setVisibleLogicalRange({from:Math.max(0,rows.length-n-1),to:rows.length+1});cardEl.querySelector('.price').textContent='$'+Number(rows.at(-1).close).toLocaleString(undefined,{maximumFractionDigits:8});new ResizeObserver(()=>chart.applyOptions({width:box.clientWidth,height:box.clientHeight})).observe(box);box.addEventListener('mouseleave',()=>chart.clearCrosshairPosition())}
-function currentCoins(){let v=viewEl.value,ls=lists(),syms;if(v==='favorites')syms=[...favorites()];else if(v==='watchlist'&&wlEl.value)syms=ls[wlEl.value]||[];else syms=allCoins.map(x=>x.symbol);let map=new Map(allCoins.map(x=>[x.symbol,x]));return syms.map(s=>map.get(s)).filter(Boolean)}
-async function render(){grid.innerHTML='';let coins=currentCoins();if(!coins.length){grid.innerHTML='<div style="padding:20px;color:#667386">No coins in this view yet.</div>';return}grid.innerHTML=coins.map((c,i)=>card({...c,key:(c.symbol+'-'+i).replace(/[^a-zA-Z0-9_-]/g,'_')})).join('');let done=0;for(let c of coins){let el=[...document.querySelectorAll('.card')][done];try{await draw(el,c.pair,c.exchange,tfEl.value)}catch(e){el.querySelector('.chart').innerHTML=`<div class="msg">${e.message}</div>`}setStatus(`${++done}/${coins.length} charts • ${tfEl.value}`)}setStatus(`${coins.length} charts • ${tfEl.value} • 200 candles loaded`)}
-async function load(){setStatus('Loading markets…');try{let coins=await getCoins(),bm=await exmap('Binance'),ym=await exmap('Bybit');allCoins=coins.map(c=>bm.has(c.symbol)?{...c,exchange:'Binance',pair:bm.get(c.symbol)}:ym.has(c.symbol)?{...c,exchange:'Bybit',pair:ym.get(c.symbol)}:null).filter(Boolean);refreshWatchlistUI();await render()}catch(e){setStatus('Error');grid.innerHTML=`<div style="padding:20px;color:#ef8d8d">${e.message}</div>`}}
-document.getElementById('load').onclick=load;document.getElementById('compact').onclick=()=>{compact=!compact;document.querySelectorAll('.card').forEach(c=>c.style.height=compact?'210px':'');document.querySelectorAll('.chart').forEach(c=>c.style.height=compact?'178px':'');};
-viewEl.onchange=()=>{if(viewEl.value==='watchlist')wlEl.style.display='';render()};wlEl.onchange=()=>{viewEl.value=wlEl.value?'watchlist':'top';render()};tfEl.onchange=()=>render();
-document.getElementById('newWatchlist').onclick=()=>{let n=prompt('Watchlist name:');if(!n)return;n=n.trim();if(!n)return;let ls=lists();if(ls[n]){alert('A watchlist with this name already exists.');return}ls[n]=[];write(LS.lists,ls);refreshWatchlistUI();wlEl.value=n;viewEl.value='watchlist';render()};
-document.getElementById('deleteWatchlist').onclick=()=>{let n=wlEl.value;if(!n){alert('Select a watchlist first.');return}if(!confirm(`Delete watchlist "${n}"?`))return;let ls=lists();delete ls[n];write(LS.lists,ls);refreshWatchlistUI();viewEl.value='top';render()};
-document.addEventListener('click',e=>{let fav=e.target.closest('.fav');if(fav){let f=favorites(),s=fav.dataset.symbol;f.has(s)?f.delete(s):f.add(s);write(LS.fav,[...f]);fav.classList.toggle('active',f.has(s));fav.title=f.has(s)?'Remove from favorites':'Add to favorites';return}let add=e.target.closest('.wladd');if(add){let n=wlEl.value;if(!n){alert('Select a watchlist first.');return}let ls=lists(),s=add.dataset.symbol;ls[n]=ls[n]||[];if(!ls[n].includes(s))ls[n].push(s);write(LS.lists,ls);refreshWatchlistUI();wlEl.value=n;alert(`${s} added to ${n}`)}});
-refreshWatchlistUI();load();
-</script></body></html>
+
+async function exchangeMap(ex){
+  if(exchangeMapCache[ex]) return exchangeMapCache[ex];
+  const url=ex==="Binance"?"https://api.binance.com/api/v3/exchangeInfo":"https://api.bybit.com/v5/market/instruments-info?category=spot&limit=1000";
+  const r=await fetch(url); if(!r.ok) throw Error(ex+" instruments unavailable");
+  const j=await r.json(),m=new Map();
+  if(ex==="Binance") for(const x of j.symbols||[]) if(x.status==="TRADING"&&x.quoteAsset==="USDT")m.set(x.baseAsset.toUpperCase(),x.symbol);
+  else for(const x of j.result?.list||[]) if(x.status==="Trading"&&x.quoteCoin==="USDT")m.set(x.baseCoin.toUpperCase(),x.symbol);
+  exchangeMapCache[ex]=m; return m;
+}
+
+async function resolveCoin(c){
+  if(c.pair&&c.exchange) return c;
+  const [b,y]=await Promise.all([exchangeMap("Binance"),exchangeMap("Bybit")]);
+  if(b.has(c.symbol)) return {...c,exchange:"Binance",pair:b.get(c.symbol)};
+  if(y.has(c.symbol)) return {...c,exchange:"Bybit",pair:y.get(c.symbol)};
+  return null;
+}
+function tfCfg(tf){return tf==="15m"?{bin:"15m",by:"15"}:tf==="4h"?{bin:"4h",by:"240"}:{bin:"1h",by:"60"}}
+async function fetchCandles(c){
+  const cacheKey=`${c.exchange}|${c.pair}|${tfEl.value}`;
+  const hit=chartDataCache.get(cacheKey);
+  if(hit) return hit;
+  const cfg=tfCfg(tfEl.value);
+  const url=c.exchange==="Binance"?`https://api.binance.com/api/v3/klines?symbol=${c.pair}&interval=${cfg.bin}&limit=200`:`https://api.bybit.com/v5/market/kline?category=spot&symbol=${c.pair}&interval=${cfg.by}&limit=200`;
+  const r=await fetch(url); if(!r.ok) throw Error("Market data unavailable");
+  const j=await r.json(); if(c.exchange==="Bybit"&&j.retCode!==0) throw Error("Market data unavailable");
+  const rows=(c.exchange==="Binance"?j:j.result.list||[]).map(x=>({time:Math.floor(+x[0]/1000),open:+x[1],high:+x[2],low:+x[3],close:+x[4],volume:+x[5]})).sort((a,b)=>a.time-b.time);
+  chartDataCache.set(cacheKey,rows); return rows;
+}
+
+function makeCard(c){
+  const card=document.createElement("section"); card.className="card"; card.dataset.coinKey=coinKey(c);
+  card.innerHTML=`<div class="head"><div class="head-left"><span class="rank">${c.rank?`#${c.rank}`:""}</span><span class="symbol">${esc(c.symbol)}</span><button class="fav ${favs().has(coinKey(c))?"active":""}" title="Favorite">★</button><button class="wladd" title="Add to active watchlist">＋</button><span class="exchange">${c.exchange||""}</span></div><span class="price">waiting…</span></div><div class="chart"><div class="msg">Waiting to load…</div></div>`;
+  card.querySelector(".fav").onclick=()=>{const f=favs(),k=coinKey(c);f.has(k)?f.delete(k):f.add(k);saveFavorites(f);card.querySelector(".fav").classList.toggle("active",f.has(k));if(currentView==="favorites") renderCurrent()};
+  card.querySelector(".wladd").onclick=()=>addToActive(c);
+  card._coin=c; return card;
+}
+
+async function initChart(card){
+  if(card.dataset.loaded==="1"||card.dataset.loading==="1") return;
+  card.dataset.loading="1";
+  try{
+    const c=await resolveCoin(card._coin);
+    if(!c){card.remove();return}
+    card._coin=c; card.querySelector(".exchange").textContent=c.exchange;
+    const box=card.querySelector(".chart"); box.innerHTML="";
+    const chart=LightweightCharts.createChart(box,{width:box.clientWidth,height:box.clientHeight,layout:{background:{type:"solid",color:"#10161e"},textColor:"#6f7d90"},grid:{vertLines:{visible:false},horzLines:{visible:false}},rightPriceScale:{borderColor:"#202a35",scaleMargins:{top:.08,bottom:.30}},timeScale:{borderColor:"#202a35",timeVisible:true,secondsVisible:false,rightOffset:2,barSpacing:6},crosshair:{mode:2,vertLine:{visible:false},horzLine:{visible:false}},attributionLogo:false});
+    const cs=chart.addSeries(LightweightCharts.CandlestickSeries,{upColor:"#26a69a",downColor:"#ef5350",borderUpColor:"#26a69a",borderDownColor:"#ef5350",wickUpColor:"#26a69a",wickDownColor:"#ef5350"});
+    const vs=chart.addSeries(LightweightCharts.HistogramSeries,{priceFormat:{type:"volume"},priceScaleId:"volume",priceLineVisible:false,lastValueVisible:false});
+    vs.priceScale().applyOptions({scaleMargins:{top:.78,bottom:.03}});
+    const rows=await fetchCandles(c); cs.setData(rows); vs.setData(rows.map(x=>({time:x.time,value:x.volume,color:x.close>=x.open?"#26a69a55":"#ef535055"})));
+    const n=Math.min(45,rows.length); chart.timeScale().setVisibleLogicalRange({from:Math.max(0,rows.length-n-1),to:rows.length+1});
+    card.querySelector(".price").textContent="$"+rows.at(-1).close.toLocaleString(undefined,{maximumFractionDigits:8});
+    new ResizeObserver(()=>chart.applyOptions({width:box.clientWidth,height:box.clientHeight})).observe(box);
+    box.addEventListener("mouseleave",()=>chart.clearCrosshairPosition());
+    card.dataset.loaded="1";
+  }catch(e){card.querySelector(".chart").innerHTML=`<div class="msg">${esc(e.message)}</div>`}
+  finally{delete card.dataset.loading}
+}
+
+const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)initChart(e.target)}),{rootMargin:"500px 0px"});
+function clearGrid(){grid.innerHTML=""}
+async function showCoins(coins){
+  clearGrid();
+  if(!coins.length){grid.innerHTML='<div class="msg" style="height:200px">Nothing here yet.</div>';return}
+  const tf=tfEl.value;
+  for(const c of coins){
+    const k=`${coinKey(c)}|${tf}`;
+    let card=chartDomCache.get(k);
+    if(!card){card=makeCard(c);chartDomCache.set(k,card)}
+    else card._coin=c;
+    grid.appendChild(card); observer.observe(card);
+  }
+  setStatus(`${coins.length} coins • ${tf} • lazy loading`);
+}
+function favoriteCoins(){const f=favs();return allTop.filter(c=>f.has(coinKey(c))).concat(externalSavedCoins().filter(c=>f.has(coinKey(c))))}
+function externalSavedCoins(){const ls=lists(),m=new Map();Object.values(ls).flat().forEach(c=>m.set(coinKey(c),c));return [...m.values()]}
+function currentWatchCoins(){const n=localStorage.getItem(LS.lastList)||"";return lists()[n]||[]}
+async function renderCurrent(){
+  renderTabs();
+  if(currentView==="top") await showCoins(allTop);
+  else if(currentView==="favorites") await showCoins(dedupe(favoriteCoins()));
+  else await showCoins(currentWatchCoins());
+}
+function dedupe(a){const m=new Map();a.forEach(x=>m.set(coinKey(x),x));return [...m.values()]}
+
+async function refreshTop(){
+  setStatus("Loading market ranking…");
+  allTop=await getTop();
+  allTop=(await Promise.all(allTop.map(resolveCoin))).filter(Boolean);
+  await renderCurrent();
+}
+sourceEl.onchange=()=>{cmcKey.classList.toggle("hidden",sourceEl.value!=="cmc");chartDataCache.clear();chartDomCache.clear();refreshTop()};
+cmcKey.onchange=()=>{if(sourceEl.value==="cmc")refreshTop()};
+tfEl.onchange=()=>renderCurrent();
+$("#refresh").onclick=()=>{chartDataCache.clear();chartDomCache.clear();renderCurrent()};
+$("#compact").onclick=()=>{compact=!compact;document.querySelectorAll(".card").forEach(c=>c.style.height=compact?"210px":"");document.querySelectorAll(".chart").forEach(c=>c.style.height=compact?"176px":"")};
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{currentView=b.dataset.view;renderCurrent()});
+
+const panel=$("#watchPanel"), activeList=$("#activeList"), watchContents=$("#watchContents"), results=$("#searchResults");
+$("#watchBtn").onclick=()=>{panel.classList.toggle("show");renderWatchUI()};
+function renderWatchUI(){
+ const ls=lists(), last=localStorage.getItem(LS.lastList)||Object.keys(ls)[0]||"";
+ activeList.innerHTML=Object.keys(ls).length?Object.keys(ls).map(n=>`<option value="${esc(n)}">${esc(n)} (${ls[n].length})</option>`).join(""):'<option value="">No watchlists</option>';
+ if(ls[last]) activeList.value=last;
+ const coins=ls[activeList.value]||[];
+ watchContents.innerHTML=coins.length?`<h3 style="margin-top:16px">Current list</h3>${coins.map((c,i)=>`<div class="watch-row"><span><b>${esc(c.symbol)}</b> <small>${esc(c.name)}</small></span><button data-remove="${i}">Remove</button></div>`).join("")}`:"";
+ watchContents.querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{const ls=lists();ls[activeList.value].splice(+b.dataset.remove,1);write(LS.lists,ls);renderWatchUI();if(currentView==="watch")renderCurrent()});
+}
+$("#createList").onclick=()=>{const n=$("#newListName").value.trim();if(!n)return;const ls=lists();if(ls[n])return alert("This name already exists.");ls[n]=[];write(LS.lists,ls);localStorage.setItem(LS.lastList,n);$("#newListName").value="";renderWatchUI()};
+$("#deleteList").onclick=()=>{const n=activeList.value;if(!n||!confirm(`Delete ${n}?`))return;const ls=lists();delete ls[n];write(LS.lists,ls);localStorage.removeItem(LS.lastList);renderWatchUI()};
+activeList.onchange=()=>{localStorage.setItem(LS.lastList,activeList.value);if(currentView==="watch")renderCurrent();renderWatchUI()};
+function addToActive(c){const n=activeList.value||localStorage.getItem(LS.lastList);if(!n)return alert("Create/select a watchlist first.");const ls=lists();ls[n]=ls[n]||[];if(!ls[n].some(x=>coinKey(x)===coinKey(c)))ls[n].push({...c});write(LS.lists,ls);localStorage.setItem(LS.lastList,n);renderWatchUI()}
+let searchTimer;
+$("#coinSearch").oninput=e=>{clearTimeout(searchTimer);const q=e.target.value.trim();if(q.length<2){results.innerHTML="";return}searchTimer=setTimeout(()=>searchCoins(q),300)};
+async function searchCoins(q){
+ results.innerHTML='<div class="msg" style="height:55px">Searching…</div>';
+ try{
+   const r=await fetch("https://api.coingecko.com/api/v3/search?query="+encodeURIComponent(q)); if(!r.ok)throw Error("Search failed");
+   const j=await r.json();
+   const found=(j.coins||[]).slice(0,15).map(x=>({id:x.id,name:x.name,symbol:String(x.symbol).toUpperCase(),rank:x.market_cap_rank||null}));
+   results.innerHTML=found.length?found.map((c,i)=>`<div class="search-item"><span><b>${esc(c.symbol)}</b> <small>${esc(c.name)}</small></span><button data-add="${i}">＋ Add</button></div>`).join(""):'<div class="msg" style="height:55px">No results</div>';
+   results.querySelectorAll("[data-add]").forEach(b=>b.onclick=async()=>{const c=await resolveCoin(found[+b.dataset.add]);if(!c)return alert("This coin has no supported Binance/Bybit USDT spot market.");addToActive(c);});
+ }catch(e){results.innerHTML='<div class="msg" style="height:55px">Search unavailable</div>'}
+}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")panel.classList.remove("show")});
+renderWatchUI();refreshTop().catch(e=>{setStatus("Error");grid.innerHTML=`<div style="padding:20px;color:#ef8d8d">${esc(e.message)}</div>`});
+</script>
+</body></html>
