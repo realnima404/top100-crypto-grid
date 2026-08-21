@@ -2,19 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Crypto Scanner V7</title>
+<title>Crypto Scanner V8</title>
 <script src="https://unpkg.com/lightweight-charts@5.0.0/dist/lightweight-charts.standalone.production.js"></script>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#0b0f14;color:#d7dde7;font-family:Inter,Segoe UI,Arial,sans-serif}
-header{position:sticky;top:0;z-index:50;background:#0b0f14f2;backdrop-filter:blur(10px);border-bottom:1px solid #202833;padding:10px}
+*{box-sizing:border-box;animation:none!important;transition:none!important}body{margin:0;background:#05070a;color:#d7dde7;font-family:Inter,Segoe UI,Arial,sans-serif}
+header{position:sticky;top:0;z-index:50;background:#05070af5;backdrop-filter:blur(10px);border-bottom:1px solid #202833;padding:10px}
 .controls{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.tf-tabs{display:flex;gap:3px}.tf{min-width:42px}.tf.active{border-color:#5d9cff;color:#fff;background:#18263b}.title{font-weight:850;margin-right:8px}
 button,input,select{background:#131a22;color:#d7dde7;border:1px solid #303b49;border-radius:7px;padding:8px 10px}button{cursor:pointer}button:hover{background:#1a2330}
 button.active{border-color:#5d9cff;color:#fff;background:#18263b}.status{font-size:12px;color:#8e9aaa;margin-left:auto}.primary{border-color:#426d9e}
-.grid{display:grid;grid-template-columns:repeat(5,minmax(220px,1fr));gap:6px;padding:6px}.card{height:275px;background:#10161e;border:1px solid #202a35;border-radius:7px;overflow:hidden;position:relative}.head{height:34px;padding:6px 8px;display:flex;justify-content:space-between;align-items:center;font-size:12px;border-bottom:1px solid #202a35}.head-left{display:flex;align-items:center;min-width:0}.rank{color:#748094;margin-right:6px}.symbol{font-weight:700;color:#eef2f7}.price{color:#9eabbc}.exchange{font-size:10px;color:#687689;margin-left:5px}.fav,.wladd{border:0;background:transparent;padding:0 3px;margin-left:5px;line-height:1;cursor:pointer}.fav{font-size:18px;color:#566274}.fav.active{color:#f5c84b}.wladd{font-size:16px;color:#566274}.chart{height:241px}.msg{height:100%;display:grid;place-items:center;color:#667386;font-size:12px}
-.panel{display:none;position:fixed;right:14px;top:60px;z-index:100;width:min(410px,calc(100vw - 28px));max-height:80vh;overflow:auto;background:#10161e;border:1px solid #303b49;border-radius:10px;padding:12px;box-shadow:0 12px 40px #0008}.panel.show{display:block}.panel h3{margin:0 0 10px}.panel-row{display:flex;gap:7px;margin-bottom:8px}.panel-row input,.panel-row select{flex:1;min-width:0}.search-results{border-top:1px solid #202a35;margin-top:8px}.search-item{display:flex;justify-content:space-between;align-items:center;padding:9px 2px;border-bottom:1px solid #18212b}.search-item small{color:#778598}.watch-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #18212b}.watch-row button{padding:4px 7px}
+.grid{display:grid;grid-template-columns:repeat(5,minmax(220px,1fr));gap:6px;padding:6px}.card{height:275px;background:#080b10;border:1px solid #161c25;border-radius:7px;overflow:hidden;position:relative}.head{height:34px;padding:6px 8px;display:flex;justify-content:space-between;align-items:center;font-size:12px;border-bottom:1px solid #161c25}.head-left{display:flex;align-items:center;min-width:0}.rank{color:#748094;margin-right:6px}.symbol{font-weight:700;color:#eef2f7}.price{color:#9eabbc}.exchange{font-size:10px;color:#687689;margin-left:5px}.fav,.wladd{border:0;background:transparent;padding:0 3px;margin-left:5px;line-height:1;cursor:pointer}.fav{font-size:18px;color:#566274}.fav.active{color:#f5c84b}.wladd{font-size:16px;color:#566274}.chart{height:241px}.msg{height:100%;display:grid;place-items:center;color:#667386;font-size:12px}
+.panel{display:none;position:fixed;right:14px;top:60px;z-index:100;width:min(410px,calc(100vw - 28px));max-height:80vh;overflow:auto;background:#080b10;border:1px solid #303b49;border-radius:10px;padding:12px;box-shadow:0 12px 40px #0008}.panel.show{display:block}.panel h3{margin:0 0 10px}.panel-row{display:flex;gap:7px;margin-bottom:8px}.panel-row input,.panel-row select{flex:1;min-width:0}.search-results{border-top:1px solid #202a35;margin-top:8px}.search-item{display:flex;justify-content:space-between;align-items:center;padding:9px 2px;border-bottom:1px solid #18212b}.search-item small{color:#778598}.watch-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #18212b}.watch-row button{padding:4px 7px}
 .hidden{display:none!important}@media(max-width:1300px){.grid{grid-template-columns:repeat(4,minmax(220px,1fr))}}@media(max-width:1050px){.grid{grid-template-columns:repeat(3,minmax(220px,1fr))}}@media(max-width:760px){.grid{grid-template-columns:repeat(2,minmax(180px,1fr))}.card{height:260px}.chart{height:226px}.status{margin-left:0}}@media(max-width:760px){header{padding:7px}.controls{gap:5px}.title{width:100%;margin-bottom:2px}.status{width:100%;font-size:11px;order:10}.grid{gap:4px;padding:4px}.card{height:230px}.chart{height:196px}.head{height:32px}.tf-tabs{margin-left:auto}.tf{padding:7px 8px;min-width:38px}button,input,select{padding:7px 8px}}
 @media(max-width:480px){.grid{grid-template-columns:1fr}.card{height:245px}.chart{height:211px}.exchange{display:none}.rank{font-size:10px}}
-</style>
+.tv-lightweight-charts a,.tv-lightweight-charts [class*="attribution"],.tv-lightweight-charts [class*="logo"],a[href*="tradingview"]{display:none!important;visibility:hidden!important;opacity:0!important}</style>
 </head>
 <body>
 <header><div class="controls">
@@ -129,12 +129,12 @@ async function initChart(card){
     if(!c){card.remove();return}
     card._coin=c; card.querySelector(".exchange").textContent=c.exchange;
     const box=card.querySelector(".chart"); box.innerHTML="";
-    const chart=LightweightCharts.createChart(box,{width:box.clientWidth,height:box.clientHeight,layout:{background:{type:"solid",color:"#10161e"},textColor:"#6f7d90"},grid:{vertLines:{visible:false},horzLines:{visible:false}},rightPriceScale:{borderColor:"#202a35",scaleMargins:{top:.08,bottom:.30}},timeScale:{borderColor:"#202a35",timeVisible:true,secondsVisible:false,rightOffset:2,barSpacing:6},crosshair:{mode:2,vertLine:{visible:false},horzLine:{visible:false}},attributionLogo:false});
+    const chart=LightweightCharts.createChart(box,{width:box.clientWidth,height:box.clientHeight,layout:{background:{type:"solid",color:"#080b10"},textColor:"#6f7d90"},grid:{vertLines:{visible:false},horzLines:{visible:false}},rightPriceScale:{borderColor:"#161c25",scaleMargins:{top:.08,bottom:.30}},timeScale:{borderColor:"#161c25",timeVisible:true,secondsVisible:false,rightOffset:2,barSpacing:6},crosshair:{mode:2,vertLine:{visible:false},horzLine:{visible:false}},attributionLogo:false});
     const cs=chart.addSeries(LightweightCharts.CandlestickSeries,{upColor:"#26a69a",downColor:"#ef5350",borderUpColor:"#26a69a",borderDownColor:"#ef5350",wickUpColor:"#26a69a",wickDownColor:"#ef5350"});
     const vs=chart.addSeries(LightweightCharts.HistogramSeries,{priceFormat:{type:"volume"},priceScaleId:"volume",priceLineVisible:false,lastValueVisible:false});
     vs.priceScale().applyOptions({scaleMargins:{top:.78,bottom:.03}});
     const rows=await fetchCandles(c); cs.setData(rows); vs.setData(rows.map(x=>({time:x.time,value:x.volume,color:x.close>=x.open?"#26a69a55":"#ef535055"})));
-    const n=Math.min(45,rows.length); chart.timeScale().setVisibleLogicalRange({from:Math.max(0,rows.length-n-1),to:rows.length+1});
+    const n=Math.min(innerWidth<=760?34:55,rows.length); chart.timeScale().setVisibleLogicalRange({from:Math.max(0,rows.length-n-1),to:rows.length+1});
     card.querySelector(".price").textContent="$"+rows.at(-1).close.toLocaleString(undefined,{maximumFractionDigits:8});
     new ResizeObserver(()=>chart.applyOptions({width:box.clientWidth,height:box.clientHeight})).observe(box);
     box.addEventListener("mouseleave",()=>chart.clearCrosshairPosition());
@@ -143,13 +143,31 @@ async function initChart(card){
   finally{delete card.dataset.loading}
 }
 
+const pendingChartCards=[];
+let lazyPumpRunning=false;
+function pumpLazyCharts(){
+  if(lazyPumpRunning) return;
+  lazyPumpRunning=true;
+  const workers=innerWidth<=760?2:5;
+  let active=0;
+  const pump=()=>{
+    while(active<workers && pendingChartCards.length){
+      const card=pendingChartCards.shift();
+      active++;
+      initChart(card).finally(()=>{active--;pump();});
+    }
+    if(!pendingChartCards.length && active===0) lazyPumpRunning=false;
+  };
+  pump();
+}
 const observer=new IntersectionObserver(entries=>entries.forEach(e=>{
-  if(e.isIntersecting){ initChart(e.target); observer.unobserve(e.target); }
-}),{rootMargin:"350px 0px"});
+  if(e.isIntersecting){ pendingChartCards.push(e.target); observer.unobserve(e.target); }
+  pumpLazyCharts();
+}),{rootMargin:"700px 0px"});
 async function runInitialQueue(){
   if(initialQueueRunning) return;
   initialQueueRunning=true;
-  const workers=innerWidth<=760?1:3;
+  const workers=innerWidth<=760?2:6;
   async function worker(){
     while(initialQueue.length){ const card=initialQueue.shift(); if(card) await initChart(card); }
   }
@@ -172,7 +190,7 @@ async function showCoins(coins){
   setStatus(`${coins.length} coins • ${tf} • fast loading`);
   // IntersectionObserver can miss already-visible elements on first paint in some browsers.
   // Start a small eager queue for the first visible cards, then keep lazy loading for the rest.
-  initialQueue=[...grid.querySelectorAll(".card")].slice(0, innerWidth <= 760 ? 2 : 10);
+  initialQueue=[...grid.querySelectorAll(".card")].slice(0, innerWidth <= 760 ? 4 : 15);
   runInitialQueue();
 }
 function favoriteCoins(){const f=favs();return allTop.filter(c=>f.has(coinKey(c))).concat(externalSavedCoins().filter(c=>f.has(coinKey(c))))}

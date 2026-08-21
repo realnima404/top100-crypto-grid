@@ -1,14 +1,15 @@
-# Top 100 Crypto Grid V7
+# Top 100 Crypto Grid V8
 
-## Fixes and improvements
-- Fixes the first-load issue: visible charts start loading immediately without needing to switch tabs.
-- Faster mobile behavior:
-  - only a small number of visible charts are loaded immediately
-  - lower initial request concurrency on phones
-  - the remaining charts load while scrolling
-  - reduced mobile card/UI cost
-- Timeframes are direct buttons: 15m / 1H / 4H.
-- Keeps V6 features: independent Favorites, unlimited custom watchlists, global coin search, chart cache, DOM cache, lazy loading, Binance→Bybit fallback, stablecoin filtering, volume, no grid lines and right-side candle spacing.
+## Performance update
+- Darker UI theme.
+- Removes/hides chart attribution/logo overlays.
+- Faster initial chart loading.
+- Faster lazy-loading with a queued concurrency limiter.
+- More charts prepared immediately on first load.
+- Larger preload distance while scrolling.
+- Mobile uses controlled parallel loading instead of creating many charts at once.
+- Lower chart rendering workload on phones.
+- Keeps: 15m / 1H / 4H buttons, independent Favorites, custom unlimited watchlists, global coin search, chart/data cache, volume, no guide grid, Binance → Bybit fallback.
 
-## Render deploy
-Replace the project files in GitHub and commit to main. Render will auto-deploy.
+## Deploy
+Replace the repository files and commit to `main`. Render will auto-deploy.
