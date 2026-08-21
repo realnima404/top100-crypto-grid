@@ -1,9 +1,7 @@
-# Top 100 Crypto Grid V9
-- Restored full standalone Watchlists drawer/list UI.
-- Multiple named watchlists shown as a real list, with selection and delete controls.
-- Search any coin and add it to the selected watchlist.
-- Independent Favorites.
+# Top 100 Crypto Grid V9.1
+Bugfix release for V9.
+- Fixed `Identifier 'top' has already been declared` by renaming the Top 100 data variable.
+- Restored standalone Watchlists drawer/list UI.
+- Multiple named watchlists, search and add coins, independent Favorites.
 - 15m / 1H / 4H buttons.
-- Cached chart data and lazy chart creation.
-- Darker theme and hidden chart attribution.
-- Mobile-friendly layout.
+- Dark theme, hidden chart attribution, lazy loading and caching.

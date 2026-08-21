@@ -1,6 +1,6 @@
 <!doctype html><html><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Crypto Scanner V9</title>
+<title>Crypto Scanner V9.1</title>
 <script src="https://unpkg.com/lightweight-charts@5.0.0/dist/lightweight-charts.standalone.production.js"></script>
 <style>
 *{box-sizing:border-box;animation:none!important;transition:none!important}
@@ -42,7 +42,7 @@ button.active{background:#122238;border-color:#426d9e}.tf{min-width:42px}.status
 <script>
 const $=s=>document.querySelector(s), grid=$("#grid"), status=$("#status");
 const favKey="v9fav", listKey="v9lists", selectedKey="v9selected";
-let view="top", tf="1h", top=[], cache=new Map(), cards=new Map(), loading=new Set();
+let view="top", tf="1h", topCoinsData=[], cache=new Map(), cards=new Map(), loading=new Set();
 const stable=new Set(["USDT","USDC","FDUSD","TUSD","USDE","DAI","USDS","USDD","PYUSD","USD1","USDP","GUSD","FRAX","LUSD","USTC","EURC","EURT","EURS","USDB","USDY","USDM","USDX","RLUSD"]);
 const read=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch{return d}};
 const write=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
@@ -94,7 +94,7 @@ function make(c){
  card.querySelector(".fav").onclick=()=>{let s=favs(),k=key(c);s.has(k)?s.delete(k):s.add(k);write(favKey,[...s]);card.querySelector(".fav").classList.toggle("active",s.has(k));if(view==="favorites")render()};
  card.querySelector(".add").onclick=()=>addCurrent(c);cards.set(k,card);return card;
 }
-function current(){const ls=lists(),sel=localStorage.getItem(selectedKey);if(view==="top")return top;if(view==="favorites"){const f=favs(),extra=Object.values(ls).flat();const m=new Map([...top,...extra].map(x=>[key(x),x]));return [...m.values()].filter(x=>f.has(key(x)))}return ls[localStorage.getItem(selectedKey)]||[]}
+function current(){const ls=lists(),sel=localStorage.getItem(selectedKey);if(view==="top")return topCoinsData;if(view==="favorites"){const f=favs(),extra=Object.values(ls).flat();const m=new Map([...top,...extra].map(x=>[key(x),x]));return [...m.values()].filter(x=>f.has(key(x)))}return ls[localStorage.getItem(selectedKey)]||[]}
 function render(){grid.innerHTML="";const cs=current();if(!cs.length){grid.innerHTML='<div class="empty" style="padding:20px">Nothing here yet.</div>';return}for(const c of cs){const card=make(c);grid.appendChild(card);io.observe(card)}setStatus(`${cs.length} charts • ${tf}`)}
 function renderLists(){
  const ls=lists(),sel=localStorage.getItem(selectedKey);$("#lists").innerHTML=Object.keys(ls).length?Object.keys(ls).map(n=>`<div class="list ${n===sel?"selected":""}" data-list="${esc(n)}"><span>📁 ${esc(n)} <small>(${ls[n].length})</small></span><button class="del" data-del="${esc(n)}">×</button></div>`).join(""):'<div class="empty">No watchlists yet. Create one above.</div>';
@@ -108,5 +108,5 @@ document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{view=b.dataset.view;
 document.querySelectorAll(".tf").forEach(b=>b.onclick=()=>{if(tf===b.dataset.tf)return;tf=b.dataset.tf;document.querySelectorAll(".tf").forEach(x=>x.classList.toggle("active",x===b));cards.clear();cache.clear();render()});
 $("#refresh").onclick=()=>{cache.clear();cards.clear();render()};
 let timer;$("#coinSearch").oninput=e=>{clearTimeout(timer);const q=e.target.value.trim();if(q.length<2){$("#results").innerHTML="";return}timer=setTimeout(async()=>{try{const r=await fetch("https://api.coingecko.com/api/v3/search?query="+encodeURIComponent(q));const j=await r.json();const a=(j.coins||[]).slice(0,15);$("#results").innerHTML=a.map((x,i)=>`<div class="result"><span><b>${esc(x.symbol.toUpperCase())}</b> <small>${esc(x.name)}</small></span><button data-r="${i}">＋</button></div>`).join("");document.querySelectorAll("[data-r]").forEach(b=>b.onclick=async()=>{const x=a[+b.dataset.r],c=await resolve({id:x.id,name:x.name,symbol:x.symbol.toUpperCase()});if(c)addCurrent(c);else alert("No Binance/Bybit USDT market.")})}catch{$("#results").innerHTML='<div class="empty">Search unavailable</div>'}},250)};
-(async()=>{try{top=await topCoins();top=(await Promise.all(top.map(resolve))).filter(Boolean);render()}catch(e){setStatus("Error: "+e.message)}})();
+(async()=>{try{topCoinsData=await topCoins();topCoinsData=(await Promise.all(topCoinsData.map(resolve))).filter(Boolean);render()}catch(e){setStatus("Error: "+e.message)}})();
 </script></body></html>
