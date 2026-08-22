@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fa" dir="ltr">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -15,7 +15,7 @@ header{position:sticky;top:0;z-index:50;background:#030507f7;border-bottom:1px s
 .nav button:hover{background:#0e141c}
 .nav button.active{background:#111d2b;border-color:#365778;color:#f0f5fb}
 .tf{display:flex;gap:3px;margin-left:auto}.tf button{min-width:42px;padding:7px 8px}
-.status{color:#596879;font-size:10px;margin-left:4px}
+.status{color:#596879;font-size:10px;margin-left:4px;display:none}
 .grid{display:grid;grid-template-columns:repeat(5,minmax(220px,1fr));gap:5px;padding:5px}
 .card{height:270px;background:#06090d;border:1px solid #111820;border-radius:6px;overflow:hidden}
 .head{height:32px;padding:5px 7px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #111820}
@@ -38,16 +38,16 @@ header{position:sticky;top:0;z-index:50;background:#030507f7;border-bottom:1px s
 <header>
 <div class="nav">
 <button class="view active" data-view="top">Top 100</button>
-<button class="view" data-view="favorites">موردعلاقه‌ها</button>
-<button class="view" data-view="daily">واچلیست روزانه</button>
-<button class="view" data-view="weekly">واچلیست هفتگی</button>
-<button class="view" data-view="long">واچلیست بلندمدت</button>
+<button class="view" data-view="favorites">Favorites</button>
+<button class="view" data-view="daily">Daily Watchlist</button>
+<button class="view" data-view="weekly">Weekly Watchlist</button>
+<button class="view" data-view="long">Long-Term Watchlist</button>
 <div class="tf">
 <button class="tfb" data-tf="15m">15m</button>
 <button class="tfb active" data-tf="1h">1H</button>
 <button class="tfb" data-tf="4h">4H</button>
 </div>
-<span id="status" class="status">در حال بارگذاری…</span>
+<span id="status" class="status">Loading…</span>
 </div>
 </header>
 <main id="grid" class="grid"></main>
@@ -55,7 +55,7 @@ header{position:sticky;top:0;z-index:50;background:#030507f7;border-bottom:1px s
 <script>
 const grid=document.getElementById('grid'), status=document.getElementById('status');
 let view='top', timeframe='1h', topCoins=[], symbolMap=null;
-const chartRecords=new Map(); // key -> {card,chart,candle,volume,seriesByTf,dataByTf,coin}
+const chartRecords=new Map(); // persistent chart instances
 const dataCache=new Map();
 const favorites=new Set(JSON.parse(localStorage.getItem('crypto_favorites_v11')||'[]'));
 const lists=JSON.parse(localStorage.getItem('crypto_watchlists_v11')||'{"daily":[],"weekly":[],"long":[]}');
@@ -77,31 +77,48 @@ async function fetchJSON(url,opts){
 }
 
 async function loadTop(){
-  // CoinGecko gives market-cap ranking. A single request; no per-coin requests.
-  const j=await fetchJSON('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=24h');
-  return (j||[]).filter(c=>!isStable(c)).map(c=>({
-    id:c.id,name:c.name,symbol:cleanSymbol(c.symbol),rank:c.market_cap_rank
-  }));
+  try{
+    const j=await fetchJSON('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false');
+    if(Array.isArray(j)&&j.length) return j.filter(c=>!isStable(c)).map(c=>({
+      id:c.id,name:c.name,symbol:cleanSymbol(c.symbol),rank:c.market_cap_rank
+    }));
+  }catch(e){ console.warn('CoinGecko failed, using Binance fallback',e); }
+
+  // Reliable fallback: Binance 24h markets, sorted by quote volume.
+  const j=await fetchJSON('https://api.binance.com/api/v3/ticker/24hr');
+  return (j||[])
+    .filter(x=>x.symbol.endsWith('USDT') && !x.symbol.includes('UP') && !x.symbol.includes('DOWN') && !x.symbol.includes('BULL') && !x.symbol.includes('BEAR'))
+    .sort((a,b)=>Number(b.quoteVolume)-Number(a.quoteVolume))
+    .filter(x=>!isStable({symbol:x.symbol.slice(0,-4),name:''}))
+    .slice(0,100)
+    .map((x,i)=>({id:x.symbol,name:x.symbol,symbol:cleanSymbol(x.symbol.slice(0,-4)),rank:i+1}));
 }
 
 async function loadSymbolMap(){
   if(symbolMap)return symbolMap;
-  setStatus('در حال آماده‌سازی بازارها…');
   const map=new Map();
-  const tasks=[
-    fetchJSON('https://api.binance.com/api/v3/exchangeInfo').then(j=>{
-      for(const x of j.symbols||[]){
-        if(x.status==='TRADING' && x.quoteAsset==='USDT') map.set(cleanSymbol(x.baseAsset),{exchange:'Binance',pair:x.symbol});
-      }
-    }).catch(()=>{}),
-    fetchJSON('https://api.bybit.com/v5/market/instruments-info?category=spot&limit=1000').then(j=>{
-      for(const x of j.result?.list||[]){
-        if(x.status==='Trading' && x.quoteCoin==='USDT' && !map.has(cleanSymbol(x.baseCoin)))
-          map.set(cleanSymbol(x.baseCoin),{exchange:'Bybit',pair:x.symbol});
-      }
-    }).catch(()=>{})
-  ];
-  await Promise.all(tasks); symbolMap=map; return map;
+  // Do not block first paint on exchangeInfo. Use a compact Bybit map only as fallback.
+  try{
+    const j=await fetchJSON('https://api.bybit.com/v5/market/instruments-info?category=spot&limit=1000');
+    for(const x of j.result?.list||[]){
+      if(x.status==='Trading' && x.quoteCoin==='USDT' && !map.has(cleanSymbol(x.baseCoin)))
+        map.set(cleanSymbol(x.baseCoin),{exchange:'Bybit',pair:x.symbol});
+    }
+  }catch(e){ console.warn('Bybit map unavailable',e); }
+  symbolMap=map; return map;
+}
+
+async function resolveCoin(c){
+  const sym=cleanSymbol(c.symbol);
+  // Most coins use SYMBOLUSDT on Binance. Probe the actual kline endpoint.
+  const binancePair=sym+'USDT';
+  try{
+    const r=await fetch('https://api.binance.com/api/v3/klines?symbol='+encodeURIComponent(binancePair)+'&interval=1h&limit=1');
+    if(r.ok) return {...c,market:{exchange:'Binance',pair:binancePair}};
+  }catch{}
+  const map=await loadSymbolMap();
+  if(map.has(sym)) return {...c,market:map.get(sym)};
+  return null;
 }
 
 function endpoint(c){
@@ -124,8 +141,16 @@ async function loadCandles(c,tf){
 }
 
 async function resolveCoins(arr){
-  const map=await loadSymbolMap();
-  return arr.map(c=>map.has(c.symbol)?({...c,market:map.get(c.symbol)}):null).filter(Boolean);
+  const out=[]; let i=0;
+  const workers=Math.min(innerWidth<700?4:10,arr.length);
+  async function worker(){
+    while(i<arr.length){
+      const c=arr[i++];
+      try{ const r=await resolveCoin(c); if(r) out.push(r); }catch{}
+    }
+  }
+  await Promise.all(Array.from({length:workers},worker));
+  return out;
 }
 
 function listCoins(){
@@ -137,9 +162,9 @@ function listCoins(){
 function makeCard(c){
   const k=coinKey(c);
   let rec=chartRecords.get(k);
-  if(rec){rec.coin=c; return rec.card;}
+  if(rec){rec.coin=c; rec.card.querySelector('.exchange').textContent=c.market?.exchange||''; return rec.card;}
   const card=document.createElement('section'); card.className='card';
-  card.innerHTML=`<div class="head"><div class="left"><span class="rank">${c.rank?'#'+c.rank:''}</span><span class="symbol">${c.symbol}</span><button class="star ${favorites.has(k)?'on':''}" title="موردعلاقه">★</button><span class="exchange">${c.market?.exchange||''}</span></div><span class="price">…</span></div><div class="chart"><div class="msg">در حال بارگذاری…</div></div>`;
+  card.innerHTML=`<div class="head"><div class="left"><span class="rank">${c.rank?'#'+c.rank:''}</span><span class="symbol">${c.symbol}</span><button class="star ${favorites.has(k)?'on':''}" title="Favorite">★</button><span class="exchange">${c.market?.exchange||''}</span></div><span class="price">…</span></div><div class="chart"><div class="msg">Loading…</div></div>`;
   const star=card.querySelector('.star');
   star.onclick=()=>{
     favorites.has(k)?favorites.delete(k):favorites.add(k); saveFav(); star.classList.toggle('on',favorites.has(k));
@@ -176,15 +201,15 @@ async function updateCard(c){
     rec.chart.timeScale().setVisibleLogicalRange({from:Math.max(0,rows.length-n-1),to:rows.length+1});
     rec.card.querySelector('.price').textContent='$'+money(rows.at(-1)?.close||0);
     rec.loadedTf=timeframe;
-  }catch(e){rec.card.querySelector('.chart').innerHTML='<div class="msg">داده این بازار در دسترس نیست</div>'}
+  }catch(e){console.warn('Chart data failed',e); if(!rec.loadedTf) rec.card.querySelector('.chart').innerHTML='<div class="msg">Market data unavailable</div>'}
 }
 
 let renderToken=0;
 async function render(){
   const token=++renderToken;
   const raw=listCoins();
-  setStatus(`${raw.length} کوین • ${timeframe}`);
-  if(!raw.length){grid.innerHTML='<div class="msg" style="padding:20px">این لیست خالی است.</div>';return}
+  setStatus(`${raw.length} coins • ${timeframe}`);
+  if(!raw.length){grid.innerHTML='<div class="msg" style="padding:20px">This watchlist is empty.</div>';return}
   // Reuse existing card DOM; do not rebuild on timeframe switches.
   const resolved=await resolveCoins(raw);
   if(token!==renderToken)return;
@@ -200,7 +225,7 @@ async function render(){
     while(i<resolved.length){const c=resolved[i++]; await updateCard(c);}
   }
   await Promise.all(Array.from({length:workers},worker));
-  if(token===renderToken)setStatus(`${resolved.length} چارت • ${timeframe}`);
+  if(token===renderToken)setStatus(`${resolved.length} charts • ${timeframe}`);
 }
 
 document.querySelectorAll('.view').forEach(b=>b.onclick=()=>{
@@ -219,11 +244,10 @@ document.querySelectorAll('.tfb').forEach(b=>b.onclick=()=>{
 (async()=>{
   try{
     topCoins=await loadTop();
-    await loadSymbolMap();
     await render();
   }catch(e){
-    console.error(e); setStatus('خطا در دریافت اطلاعات');
-    grid.innerHTML=`<div class="msg" style="padding:25px">دریافت لیست کوین‌ها انجام نشد. صفحه را Refresh کنید.</div>`;
+    console.error(e); setStatus('Error loading data');
+    grid.innerHTML=`<div class="msg" style="padding:25px">Could not load the coin list. Refresh the page.</div>`;
   }
 })();
 </script>
