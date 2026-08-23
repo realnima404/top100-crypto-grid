@@ -1,136 +1,255 @@
 <!doctype html>
-<html lang="en" dir="ltr">
+<html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Crypto Grid</title>
-<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.0.0/dist/lightweight-charts.standalone.production.js"></script>
-<script>if(!window.LightweightCharts)document.write('<script src="https://unpkg.com/lightweight-charts@5.0.0/dist/lightweight-charts.standalone.production.js"><\\/script>')</script>
+<script src="https://unpkg.com/lightweight-charts@5.0.0/dist/lightweight-charts.standalone.production.js"></script>
 <style>
-*{box-sizing:border-box}html,body{margin:0;background:#030507;color:#dce3ed;font:13px Arial,sans-serif}
-header{position:sticky;top:0;z-index:50;background:#030507f7;border-bottom:1px solid #11161d;padding:7px 8px}
-.nav{display:flex;align-items:center;gap:5px;flex-wrap:wrap}.nav button{border:1px solid #171f29;background:#080b10;color:#aeb9c8;border-radius:6px;padding:7px 10px;cursor:pointer}.nav button.active{background:#111d2b;border-color:#365778;color:#fff}.tf{margin-left:auto;display:flex;gap:3px}.tf button{min-width:42px}.grid{display:grid;grid-template-columns:repeat(5,minmax(210px,1fr));gap:5px;padding:5px}
-.card{height:270px;background:#070a0e;border:1px solid #121821;border-radius:6px;overflow:hidden}.head{height:32px;display:flex;align-items:center;justify-content:space-between;padding:5px 7px;border-bottom:1px solid #121821}.left{display:flex;align-items:center;min-width:0}.rank{color:#526074;margin-right:4px}.symbol{font-weight:800}.exchange{color:#596678;font-size:9px;margin-left:5px}.price{color:#8794a6;font-size:11px}.fav{border:0;background:transparent;color:#566274;font-size:16px;padding:0 3px;margin-left:4px;cursor:pointer}.fav.on{color:#f4c84b}.chart{height:237px}.msg{height:100%;display:grid;place-items:center;color:#566579}
-.watchSearch{display:none;position:relative;min-width:180px}.watchSearch.open{display:block}.watchSearch input{width:100%;background:#080b10;color:#dce3ed;border:1px solid #263241;border-radius:6px;padding:7px 9px}.results{position:absolute;top:40px;left:0;right:0;z-index:100;background:#070a0e;border:1px solid #202a35;border-radius:7px;box-shadow:0 15px 45px #000b;max-height:300px;overflow:auto}.row{display:flex;align-items:center;justify-content:space-between;padding:8px;border-bottom:1px solid #121821}.row small{color:#687789}.row button{background:#0c1420;color:#c9d6e6;border:1px solid #263b52;border-radius:5px;padding:5px 9px}
-@media(max-width:1200px){.grid{grid-template-columns:repeat(4,minmax(200px,1fr))}}@media(max-width:900px){.grid{grid-template-columns:repeat(3,minmax(190px,1fr))}}
-@media(max-width:700px){.watchSearch{order:10;flex:1;min-width:150px}.grid{grid-template-columns:repeat(2,minmax(165px,1fr));gap:4px;padding:4px}.card{height:235px}.chart{height:203px}.tf{margin-left:0}.nav button{padding:7px 8px}}
-@media(max-width:430px){.grid{grid-template-columns:1fr}.card{height:240px}.chart{height:208px}}
-</style></head>
+*{box-sizing:border-box;animation:none!important;transition:none!important}body{margin:0;background:#05070a;color:#d7dde7;font-family:Inter,Segoe UI,Arial,sans-serif}
+header{position:sticky;top:0;z-index:50;background:#05070af5;backdrop-filter:blur(10px);border-bottom:1px solid #202833;padding:10px}
+.controls{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.tf-tabs{display:flex;gap:3px}.tf{min-width:42px}.tf.active{border-color:#5d9cff;color:#fff;background:#18263b}.title{font-weight:850;margin-right:8px}
+button,input,select{background:#131a22;color:#d7dde7;border:1px solid #303b49;border-radius:7px;padding:8px 10px}button{cursor:pointer}button:hover{background:#1a2330}
+button.active{border-color:#5d9cff;color:#fff;background:#18263b}.status{font-size:12px;color:#8e9aaa;margin-left:auto}.primary{border-color:#426d9e}
+.grid{display:grid;grid-template-columns:repeat(5,minmax(220px,1fr));gap:6px;padding:6px}.card{height:275px;background:#080b10;border:1px solid #161c25;border-radius:7px;overflow:hidden;position:relative}.head{height:34px;padding:6px 8px;display:flex;justify-content:space-between;align-items:center;font-size:12px;border-bottom:1px solid #161c25}.head-left{display:flex;align-items:center;min-width:0}.rank{color:#748094;margin-right:6px}.symbol{font-weight:700;color:#eef2f7}.price{color:#9eabbc}.exchange{font-size:10px;color:#687689;margin-left:5px}.fav,.wladd{border:0;background:transparent;padding:0 3px;margin-left:5px;line-height:1;cursor:pointer}.fav{font-size:18px;color:#566274}.fav.active{color:#f5c84b}.wladd{font-size:16px;color:#566274}.chart{height:241px}.msg{height:100%;display:grid;place-items:center;color:#667386;font-size:12px}
+.panel{display:none;position:fixed;right:14px;top:60px;z-index:100;width:min(410px,calc(100vw - 28px));max-height:80vh;overflow:auto;background:#080b10;border:1px solid #303b49;border-radius:10px;padding:12px;box-shadow:0 12px 40px #0008}.panel.show{display:block}.panel h3{margin:0 0 10px}.panel-row{display:flex;gap:7px;margin-bottom:8px}.panel-row input,.panel-row select{flex:1;min-width:0}.search-results{border-top:1px solid #202a35;margin-top:8px}.search-item{display:flex;justify-content:space-between;align-items:center;padding:9px 2px;border-bottom:1px solid #18212b}.search-item small{color:#778598}.watch-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #18212b}.watch-row button{padding:4px 7px}
+.hidden{display:none!important}@media(max-width:1300px){.grid{grid-template-columns:repeat(4,minmax(220px,1fr))}}@media(max-width:1050px){.grid{grid-template-columns:repeat(3,minmax(220px,1fr))}}@media(max-width:760px){.grid{grid-template-columns:repeat(2,minmax(180px,1fr))}.card{height:260px}.chart{height:226px}.status{margin-left:0}}@media(max-width:760px){header{padding:7px}.controls{gap:5px}.title{width:100%;margin-bottom:2px}.status{width:100%;font-size:11px;order:10}.grid{gap:4px;padding:4px}.card{height:230px}.chart{height:196px}.head{height:32px}.tf-tabs{margin-left:auto}.tf{padding:7px 8px;min-width:38px}button,input,select{padding:7px 8px}}
+@media(max-width:480px){.grid{grid-template-columns:1fr}.card{height:245px}.chart{height:211px}.exchange{display:none}.rank{font-size:10px}}
+.tv-lightweight-charts a,.tv-lightweight-charts [class*="attribution"],.tv-lightweight-charts [class*="logo"],a[href*="tradingview"]{display:none!important;visibility:hidden!important;opacity:0!important}
+/* V18 simple header + inline watchlist search */
+body{background:#030507}
+header{background:#030507f5;border-bottom:1px solid #111820;padding:7px}
+.controls{gap:5px}
+.title,#refresh,#compact,#source,#cmcKey,.status,.wladd,.panel{display:none!important}
+.tab{padding:7px 10px}.tab.active{background:#101b29;border-color:#314d6c}
+.header-search{position:relative;width:230px;margin-left:4px}.header-search.hidden{display:none!important}
+.header-search input{width:100%;background:#080b10;color:#dbe2ec;border:1px solid #1d2936;border-radius:6px;padding:7px 9px}
+.header-search .search-results{position:absolute;top:38px;left:0;right:0;z-index:100;background:#080b10;border:1px solid #202b38;border-radius:7px;max-height:300px;overflow:auto;box-shadow:0 15px 40px #000b}
+.search-item{display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px solid #111820}
+.search-item button{padding:4px 8px}
+.card{background:#06090d;border-color:#111821}
+@media(max-width:760px){.header-search{width:190px}.grid{gap:4px}.controls{gap:4px}}
+@media(max-width:520px){.header-search{width:100%;order:10}.controls{flex-wrap:wrap}.tab{padding:6px 7px;font-size:11px}}
+</style>
+</head>
 <body>
-<header><div class="nav">
-<button class="view active" data-view="top">Top 100</button>
-<button class="view" data-view="favorites">Favorites</button>
-<button class="view" data-view="daily">Daily Watchlist</button>
-<button class="view" data-view="weekly">Weekly Watchlist</button>
-<button class="view" data-view="long">Long-Term Watchlist</button>
-<div id="watchSearch" class="watchSearch"><input id="search" placeholder="Search coins…"><div id="results" class="results"></div></div>
-<div class="tf"><button class="tfbtn" data-tf="15m">15m</button><button class="tfbtn active" data-tf="1h">1H</button><button class="tfbtn" data-tf="4h">4H</button></div>
+<header><div class="controls">
+<button class="tab active" data-view="top">Top 100</button>
+<button class="tab" data-view="favorites">Favorites</button>
+<button class="tab" data-view="daily">Daily Watchlist</button>
+<button class="tab" data-view="weekly">Weekly Watchlist</button>
+<button class="tab" data-view="long">Long-Term Watchlist</button>
+<div class="tf-tabs">
+<button class="tf" data-tf="15m">15m</button><button class="tf active" data-tf="1h">1H</button><button class="tf" data-tf="4h">4H</button>
+</div>
+<div id="searchBox" class="header-search hidden"><input id="coinSearch" placeholder="Search any coin to add…"><div id="searchResults" class="search-results"></div></div>
 </div></header>
+
 <main id="grid" class="grid"></main>
+
 <script>
-const $=s=>document.querySelector(s),grid=$("#grid"),watchSearch=$("#watchSearch"),search=$("#search"),results=$("#results");
-const stable=new Set(["USDT","USDC","FDUSD","TUSD","USDE","DAI","USDS","USDD","PYUSD","USD1","USDP","GUSD","FRAX","LUSD","USTC","EURC","EURT","EURS","USDB","USDY","USDM","RLUSD"]);
-const read=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch{return d}},write=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-let view="top",tf="1h",topCoins=[];
-let lists=read("crypto-watchlists-v14",read("crypto-watchlists-v13",{daily:[],weekly:[],long:[]})),favorites=new Set(read("crypto-favorites-v14",read("crypto-favorites-v13",[])));
-const records=new Map(),dataCache=new Map();
-const esc=x=>String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
-const sym=x=>String(x||"").toUpperCase(), key=c=>c.id||sym(c.symbol), stableCoin=c=>stable.has(sym(c.symbol))||/stablecoin|tether|usd coin|dai/i.test(c.name||"");
-async function getJSON(u){const r=await fetch(u);if(!r.ok)throw Error("HTTP "+r.status);return r.json()}
+const $=s=>document.querySelector(s);
+const grid=$("#grid");
+const LS={fav:"cryptoV18Favorites",lists:"cryptoV18Watchlists"};
+let allTop=[], currentView="top", compact=false; let currentTf="1h";
+const chartDataCache=new Map();   // exchange|pair|timeframe -> candle data
+const chartDomCache=new Map();
+let initialQueueRunning=false;
+let initialQueue=[];    // symbol|timeframe -> already-built chart card
+const exchangeMapCache={};
 
-async function loadTop(){
-  const a=await getJSON("/api/top");
-  if(!Array.isArray(a)||!a.length) throw Error("Top list unavailable");
-  return a;
+const stableSymbols=new Set(["USDT","USDC","FDUSD","TUSD","USDE","DAI","USDS","USDD","PYUSD","USD1","USDP","GUSD","FRAX","LUSD","USTC","EURC","EURT","EURS","USDB","USDY","USDM","USDX","RLUSD"]);
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+const read=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch{return d}};
+const write=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const favs=()=>new Set(read(LS.fav,[]).map(String));
+const defaultLists={daily:[],weekly:[],long:[]};
+const lists=()=>({...defaultLists,...read(LS.lists,defaultLists)});
+const saveLists=v=>write(LS.lists,v);
+const setStatus=()=>{};
+function isStable(s,n=""){return stableSymbols.has(String(s).toUpperCase())||/stablecoin|usd coin|tether|dai/.test(String(n).toLowerCase())}
+
+function coinKey(c){return c.id ? `cg:${c.id}` : `sym:${c.symbol}`}
+function saveFavorites(s){write(LS.fav,[...s])}
+function renderTabs(){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.view===currentView))}
+
+async function getTop(){
+  const r=await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false");
+  if(!r.ok) throw Error("CoinGecko request failed");
+  const j=await r.json();
+  return j.filter(x=>!isStable(x.symbol,x.name)).map(x=>({id:x.id,rank:x.market_cap_rank,name:x.name,symbol:x.symbol.toUpperCase()}));
 }
-async function candles(c,t){
-  const symbol=sym(c.symbol);
-  const k=symbol+"|"+t;
-  if(dataCache.has(k)) return dataCache.get(k);
-  const interval=t==="15m"?"15":t==="4h"?"240":"60";
-  const raw=await getJSON("/api/candles?symbol="+encodeURIComponent(symbol)+"&interval="+interval);
-  if(!raw?.rows?.length) throw Error("No candle data");
-  const rows=raw.rows.map(x=>({time:Math.floor(Number(x[0])/1000),open:Number(x[1]),high:Number(x[2]),low:Number(x[3]),close:Number(x[4]),volume:Number(x[5])}))
-    .sort((a,b)=>a.time-b.time);
-  dataCache.set(k,rows);
-  return rows;
+
+async function exchangeMap(ex){
+  if(exchangeMapCache[ex]) return exchangeMapCache[ex];
+  const url=ex==="Binance"?"https://api.binance.com/api/v3/exchangeInfo":"https://api.bybit.com/v5/market/instruments-info?category=spot&limit=1000";
+  const r=await fetch(url); if(!r.ok) throw Error(ex+" instruments unavailable");
+  const j=await r.json(),m=new Map();
+  if(ex==="Binance") for(const x of j.symbols||[]) if(x.status==="TRADING"&&x.quoteAsset==="USDT")m.set(x.baseAsset.toUpperCase(),x.symbol);
+  else for(const x of j.result?.list||[]) if(x.status==="Trading"&&x.quoteCoin==="USDT")m.set(x.baseCoin.toUpperCase(),x.symbol);
+  exchangeMapCache[ex]=m; return m;
 }
-async function createRecord(c){
-  const k=key(c), old=records.get(k);if(old)return old;
-  const card=document.createElement("section");card.className="card";
-  card.innerHTML=`<div class="head"><div class="left"><span class="rank">#${c.rank||""}</span><span class="symbol">${esc(c.symbol)}</span><button class="fav ${favorites.has(k)?"on":""}" title="Favorite">★</button><span class="exchange">${c.market?.exchange||"Market"}</span></div><span class="price">…</span></div><div class="chart"><div class="msg">Loading…</div></div>`;
-  const box=card.querySelector(".chart");
-  const chart=LightweightCharts.createChart(box,{width:box.clientWidth,height:box.clientHeight,layout:{background:{type:"solid",color:"#070a0e"},textColor:"#687789"},grid:{vertLines:{visible:false},horzLines:{visible:false}},rightPriceScale:{borderColor:"#111820",scaleMargins:{top:.08,bottom:.30}},timeScale:{borderColor:"#111820",timeVisible:true,rightOffset:2,barSpacing:6},crosshair:{mode:2,vertLine:{visible:false},horzLine:{visible:false}},attributionLogo:false});
-  const cs=chart.addSeries(LightweightCharts.CandlestickSeries,{upColor:"#22a884",downColor:"#e65353",borderUpColor:"#22a884",borderDownColor:"#e65353",wickUpColor:"#22a884",wickDownColor:"#e65353"});
-  const vs=chart.addSeries(LightweightCharts.HistogramSeries,{priceFormat:{type:"volume"},priceScaleId:"volume",priceLineVisible:false,lastValueVisible:false});vs.priceScale().applyOptions({scaleMargins:{top:.78,bottom:.03}});
-  const rec={coin:c,card,chart,cs,vs,loaded:{}};records.set(k,rec);
-  card.querySelector(".fav").onclick=()=>{favorites.has(k)?favorites.delete(k):favorites.add(k);write("crypto-favorites-v14",[...favorites]);card.querySelector(".fav").classList.toggle("on",favorites.has(k));if(view==="favorites")render()};
-  new ResizeObserver(()=>chart.applyOptions({width:box.clientWidth,height:box.clientHeight})).observe(box);
-  box.addEventListener("mouseleave",()=>chart.clearCrosshairPosition());
-  return rec;
+
+async function resolveCoin(c){
+  if(c.pair&&c.exchange) return c;
+  const [b,y]=await Promise.all([exchangeMap("Binance"),exchangeMap("Bybit")]);
+  if(b.has(c.symbol)) return {...c,exchange:"Binance",pair:b.get(c.symbol)};
+  if(y.has(c.symbol)) return {...c,exchange:"Bybit",pair:y.get(c.symbol)};
+  return null;
 }
-async function paint(rec,t){
-  if(rec.loaded[t]){
-    const rows=rec.loaded[t];
-    rec.cs.setData(rows);rec.vs.setData(rows.map(x=>({time:x.time,value:x.volume,color:x.close>=x.open?"#22a88455":"#e6535355"})));
-    fit(rec,rows);rec.card.querySelector(".price").textContent="$"+rows.at(-1).close.toLocaleString(undefined,{maximumFractionDigits:8});return;
-  }
+function tfCfg(tf){return tf==="15m"?{bin:"15m",by:"15"}:tf==="4h"?{bin:"4h",by:"240"}:{bin:"1h",by:"60"}}
+async function fetchCandles(c){
+  const cacheKey=`${c.exchange}|${c.pair}|${currentTf}`;
+  const hit=chartDataCache.get(cacheKey);
+  if(hit) return hit;
+  const cfg=tfCfg(currentTf);
+  const url=c.exchange==="Binance"?`https://api.binance.com/api/v3/klines?symbol=${c.pair}&interval=${cfg.bin}&limit=200`:`https://api.bybit.com/v5/market/kline?category=spot&symbol=${c.pair}&interval=${cfg.by}&limit=200`;
+  const r=await fetch(url); if(!r.ok) throw Error("Market data unavailable");
+  const j=await r.json(); if(c.exchange==="Bybit"&&j.retCode!==0) throw Error("Market data unavailable");
+  const rows=(c.exchange==="Binance"?j:j.result.list||[]).map(x=>({time:Math.floor(+x[0]/1000),open:+x[1],high:+x[2],low:+x[3],close:+x[4],volume:+x[5]})).sort((a,b)=>a.time-b.time);
+  chartDataCache.set(cacheKey,rows); return rows;
+}
+
+function makeCard(c){
+  const card=document.createElement("section"); card.className="card"; card.dataset.coinKey=coinKey(c);
+  card.innerHTML=`<div class="head"><div class="head-left"><span class="rank">${c.rank?`#${c.rank}`:""}</span><span class="symbol">${esc(c.symbol)}</span><button class="fav ${favs().has(coinKey(c))?"active":""}" title="Favorite">★</button><span class="exchange">${c.exchange||""}</span></div><span class="price">waiting…</span></div><div class="chart"><div class="msg">Waiting to load…</div></div>`;
+  card.querySelector(".fav").onclick=()=>{const f=favs(),k=coinKey(c);f.has(k)?f.delete(k):f.add(k);saveFavorites(f);card.querySelector(".fav").classList.toggle("active",f.has(k));if(currentView==="favorites") renderCurrent()};
+  card._coin=c; return card;
+}
+
+async function initChart(card){
+  if(card.dataset.loaded==="1"||card.dataset.loading==="1") return;
+  card.dataset.loading="1";
   try{
-    const symbol=sym(rec.coin.symbol);
-    const raw=await getJSON("/api/candles?symbol="+encodeURIComponent(symbol)+"&interval="+(t==="15m"?"15":t==="4h"?"240":"60"));
-    if(!raw?.rows?.length) throw Error("No candle data");
-    rec.coin.market={exchange:raw.exchange,pair:raw.pair};
-    const rows=raw.rows.map(x=>({time:Math.floor(Number(x[0])/1000),open:Number(x[1]),high:Number(x[2]),low:Number(x[3]),close:Number(x[4]),volume:Number(x[5])})).sort((a,b)=>a.time-b.time);
-    rec.loaded[t]=rows;
-    rec.cs.setData(rows);rec.vs.setData(rows.map(x=>({time:x.time,value:x.volume,color:x.close>=x.open?"#22a88455":"#e6535355"})));
-    fit(rec,rows);
-    rec.card.querySelector(".exchange").textContent=raw.exchange;
-    rec.card.querySelector(".price").textContent="$"+rows.at(-1).close.toLocaleString(undefined,{maximumFractionDigits:8});
-  }catch(e){
-    console.warn("Candle load failed",rec.coin.symbol,e);
-    rec.card.querySelector(".chart").innerHTML='<div class="msg">Market data unavailable</div>';
-  }
+    const c=await resolveCoin(card._coin);
+    if(!c){card.remove();return}
+    card._coin=c; card.querySelector(".exchange").textContent=c.exchange;
+    const box=card.querySelector(".chart"); box.innerHTML="";
+    const chart=LightweightCharts.createChart(box,{width:box.clientWidth,height:box.clientHeight,layout:{background:{type:"solid",color:"#080b10"},textColor:"#6f7d90"},grid:{vertLines:{visible:false},horzLines:{visible:false}},rightPriceScale:{borderColor:"#161c25",scaleMargins:{top:.08,bottom:.30}},timeScale:{borderColor:"#161c25",timeVisible:true,secondsVisible:false,rightOffset:2,barSpacing:6},crosshair:{mode:2,vertLine:{visible:false},horzLine:{visible:false}},attributionLogo:false});
+    const cs=chart.addSeries(LightweightCharts.CandlestickSeries,{upColor:"#26a69a",downColor:"#ef5350",borderUpColor:"#26a69a",borderDownColor:"#ef5350",wickUpColor:"#26a69a",wickDownColor:"#ef5350"});
+    const vs=chart.addSeries(LightweightCharts.HistogramSeries,{priceFormat:{type:"volume"},priceScaleId:"volume",priceLineVisible:false,lastValueVisible:false});
+    vs.priceScale().applyOptions({scaleMargins:{top:.78,bottom:.03}});
+    const rows=await fetchCandles(c); cs.setData(rows); vs.setData(rows.map(x=>({time:x.time,value:x.volume,color:x.close>=x.open?"#26a69a55":"#ef535055"})));
+    const n=Math.min(innerWidth<=760?34:55,rows.length); chart.timeScale().setVisibleLogicalRange({from:Math.max(0,rows.length-n-1),to:rows.length+1});
+    card.querySelector(".price").textContent="$"+rows.at(-1).close.toLocaleString(undefined,{maximumFractionDigits:8});
+    new ResizeObserver(()=>chart.applyOptions({width:box.clientWidth,height:box.clientHeight})).observe(box);
+    box.addEventListener("mouseleave",()=>chart.clearCrosshairPosition());
+    card.dataset.loaded="1";
+  }catch(e){card.querySelector(".chart").innerHTML=`<div class="msg">${esc(e.message)}</div>`}
+  finally{delete card.dataset.loading}
 }
-function fit(rec,rows){const n=Math.min(innerWidth<700?34:52,rows.length);rec.chart.timeScale().setVisibleLogicalRange({from:Math.max(0,rows.length-n-1),to:rows.length+1})}
-async function render(){
-  grid.innerHTML="";
-  const raw=view==="top"
-    ? topCoins
-    : view==="favorites"
-      ? [...new Map([...topCoins,...lists.daily,...lists.weekly,...lists.long].map(c=>[key(c),c])).values()].filter(c=>favorites.has(key(c)))
-      : (lists[view]||[]);
 
-  if(!raw.length){
-    grid.innerHTML='<div class="msg" style="padding:30px">No coins in this list yet.</div>';
-    updateTools(); return;
+const pendingChartCards=[];
+let lazyPumpRunning=false;
+function pumpLazyCharts(){
+  if(lazyPumpRunning) return;
+  lazyPumpRunning=true;
+  const workers=innerWidth<=760?2:5;
+  let active=0;
+  const pump=()=>{
+    while(active<workers && pendingChartCards.length){
+      const card=pendingChartCards.shift();
+      active++;
+      initChart(card).finally(()=>{active--;pump();});
+    }
+    if(!pendingChartCards.length && active===0) lazyPumpRunning=false;
+  };
+  pump();
+}
+const observer=new IntersectionObserver(entries=>entries.forEach(e=>{
+  if(e.isIntersecting){ pendingChartCards.push(e.target); observer.unobserve(e.target); }
+  pumpLazyCharts();
+}),{rootMargin:"700px 0px"});
+async function runInitialQueue(){
+  if(initialQueueRunning) return;
+  initialQueueRunning=true;
+  const workers=innerWidth<=760?2:6;
+  async function worker(){
+    while(initialQueue.length){ const card=initialQueue.shift(); if(card) await initChart(card); }
   }
+  await Promise.all(Array.from({length:workers},worker));
+  initialQueueRunning=false;
+}
+function clearGrid(){grid.innerHTML=""}
+async function showCoins(coins){
+  clearGrid();
+  if(!coins.length){grid.innerHTML='<div class="msg" style="height:200px">Nothing here yet.</div>';return}
+  const tf=currentTf;
+  const mobileLimit = innerWidth <= 760 && currentView==="top" ? Math.min(coins.length, 100) : coins.length;
+  for(const c of coins.slice(0,mobileLimit)){
+    const k=`${coinKey(c)}|${tf}`;
+    let card=chartDomCache.get(k);
+    if(!card){card=makeCard(c);chartDomCache.set(k,card)}
+    else card._coin=c;
+    grid.appendChild(card); observer.observe(card);
+  }
+  setStatus(`${coins.length} coins • ${tf} • fast loading`);
+  // IntersectionObserver can miss already-visible elements on first paint in some browsers.
+  // Start a small eager queue for the first visible cards, then keep lazy loading for the rest.
+  initialQueue=[...grid.querySelectorAll(".card")].slice(0, innerWidth <= 760 ? 4 : 15);
+  runInitialQueue();
+}
+function externalSavedCoins(){const m=new Map();Object.values(lists()).flat().forEach(c=>m.set(coinKey(c),c));return [...m.values()]}
+function favoriteCoins(){const f=favs();const all=[...allTop,...externalSavedCoins()];return dedupe(all.filter(c=>f.has(coinKey(c))))}
+function currentWatchCoins(){return lists()[currentView]||[]}
+async function renderCurrent(){
+  renderTabs();
+  updateSearchVisibility();
+  if(currentView==="top") await showCoins(allTop);
+  else if(currentView==="favorites") await showCoins(dedupe(favoriteCoins()));
+  else await showCoins(currentWatchCoins());
+}
+function dedupe(a){const m=new Map();a.forEach(x=>m.set(coinKey(x),x));return [...m.values()]}
 
-  // Render cards immediately. Do NOT wait for market metadata.
-  for(const c of raw){
-    const rec=await createRecord({...c,market:null});
-    rec.coin={...c,market:null};
-    rec.card.dataset.key=key(c);
-    grid.appendChild(rec.card);
-    paint(rec,tf);
-  }
-  updateTools();
+async function refreshTop(){
+  allTop=await getTop();
+  // Keep the original proven chart/exchange loading flow intact.
+  allTop=(await Promise.all(allTop.map(resolveCoin))).filter(Boolean);
+  await renderCurrent();
 }
-function updateTools(){
-  const open=view==="daily"||view==="weekly"||view==="long";
-  watchSearch.classList.toggle("open",open);
-  if(!open){search.value="";results.innerHTML="";}
+function updateSearchVisibility(){
+  const isWatch=["daily","weekly","long"].includes(currentView);
+  document.querySelector("#searchBox").classList.toggle("hidden",!isWatch);
+  if(!isWatch){document.querySelector("#searchResults").innerHTML="";document.querySelector("#coinSearch").value=""}
 }
-document.querySelectorAll(".view").forEach(b=>b.onclick=()=>{view=b.dataset.view;document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x===b));render()});
-document.querySelectorAll(".tfbtn").forEach(b=>b.onclick=()=>{if(tf===b.dataset.tf)return;tf=b.dataset.tf;document.querySelectorAll(".tfbtn").forEach(x=>x.classList.toggle("active",x===b));for(const rec of records.values())if(grid.contains(rec.card))paint(rec,tf)});
-document.addEventListener("click",e=>{if(!watchSearch.contains(e.target)&&!e.target.closest(".view")){results.innerHTML="";}});
-let timer;search.addEventListener("input",()=>{clearTimeout(timer);const q=search.value.trim();timer=setTimeout(()=>searchCoins(q),250)});
-async function searchCoins(q){
+document.querySelectorAll(".tf").forEach(b=>b.onclick=()=>{
+  const next=b.dataset.tf;if(next===currentTf)return;
+  currentTf=next;
+  document.querySelectorAll(".tf").forEach(x=>x.classList.toggle("active",x===b));
+  renderCurrent();
+});
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{currentView=b.dataset.view;renderCurrent()});
+
+const results=$("#searchResults");
+let searchTimer;
+$("#coinSearch").oninput=e=>{
+  clearTimeout(searchTimer);const q=e.target.value.trim();
   if(q.length<2){results.innerHTML="";return}
+  searchTimer=setTimeout(()=>searchCoins(q),300);
+};
+async function searchCoins(q){
+  results.innerHTML='<div class="msg" style="height:55px">Searching…</div>';
   try{
-    const j=await getJSON("/api/search?q="+encodeURIComponent(q));
-    const rows=(j.coins||[]).filter(x=>!stableCoin({symbol:x.symbol,name:x.name})).slice(0,12);
-    results.innerHTML=rows.map((x,i)=>`<div class="row"><span><b>${esc(sym(x.symbol))}</b> <small>${esc(x.name)}</small></span><button data-i="${i}">Add</button></div>`).join("")||'<div class="row"><small>No coins found.</small></div>';
-    results.querySelectorAll("[data-i]").forEach(btn=>btn.onclick=async()=>{const x=rows[+btn.dataset.i],c=await resolve({id:x.id,name:x.name,symbol:x.symbol.toUpperCase(),rank:null});if(!c){btn.textContent="No USDT market";return}if(!lists[view].some(y=>key(y)===key(c))){lists[view].push(c);write("crypto-watchlists-v14",lists)}search.value="";results.innerHTML="";await render()});
-  }catch(e){results.innerHTML='<div class="row"><small>Search unavailable.</small></div>'}
+    const r=await fetch("https://api.coingecko.com/api/v3/search?query="+encodeURIComponent(q));
+    if(!r.ok)throw Error("Search failed");
+    const j=await r.json();
+    const found=(j.coins||[]).filter(x=>!isStable(x.symbol,x.name)).slice(0,15)
+      .map(x=>({id:x.id,name:x.name,symbol:String(x.symbol).toUpperCase(),rank:x.market_cap_rank||null}));
+    results.innerHTML=found.length?found.map((c,i)=>`<div class="search-item"><span><b>${esc(c.symbol)}</b> <small>${esc(c.name)}</small></span><button data-add="${i}">Add</button></div>`).join(""):'<div class="msg" style="height:55px">No results</div>';
+    results.querySelectorAll("[data-add]").forEach(b=>b.onclick=async()=>{
+      const c=await resolveCoin(found[+b.dataset.add]);
+      if(!c){alert("This coin has no supported Binance or Bybit USDT market.");return}
+      const ls=lists();ls[currentView]=ls[currentView]||[];
+      if(!ls[currentView].some(x=>coinKey(x)===coinKey(c)))ls[currentView].push(c);
+      saveLists(ls);
+      $("#coinSearch").value="";results.innerHTML="";
+      renderCurrent();
+    });
+  }catch(e){results.innerHTML='<div class="msg" style="height:55px">Search unavailable</div>'}
 }
-(async()=>{try{topCoins=await loadTop();await render()}catch(e){console.error(e);grid.innerHTML='<div class="msg" style="padding:30px">Unable to load market data. Please refresh the page.</div>'}})();
-</script></body></html>
+document.addEventListener("click",e=>{
+  const box=$("#searchBox");if(box&&!box.contains(e.target))results.innerHTML="";
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")results.innerHTML=""});
+requestAnimationFrame(()=>refreshTop().catch(e=>{grid.innerHTML=`<div style="padding:20px;color:#ef8d8d">${esc(e.message)}</div>`}));
+</script>
+</body></html>
