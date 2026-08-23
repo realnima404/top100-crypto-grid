@@ -1,2 +1,2 @@
-# Crypto Grid V14
-Stable rebuild. English UI. Header: Top 100, Favorites, Daily/Weekly/Long-Term Watchlist, 15m/1H/4H. Watchlists support unlimited coin search via CoinGecko. Charts use Binance USDT markets with Bybit fallback, 200 candles, volume, no grid lines, dark theme, no branding. Timeframe switching reuses chart instances and cached data.
+# Crypto Grid V15
+Server-side API proxy removes browser CORS/API issues that caused charts to remain on Loading. Header contains Top 100, Favorites, Daily/Weekly/Long-Term Watchlists, inline watchlist search, and 15m/1H/4H. Search closes when clicking outside. Watchlists can contain coins outside Top 100. Binance with Bybit fallback. 200 candles, volume, no grid lines, no branding, 2-bar right offset. Chart instances and candle data are cached across timeframe switches.

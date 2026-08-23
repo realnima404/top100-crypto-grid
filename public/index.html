@@ -4,14 +4,15 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Crypto Grid</title>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.0.0/dist/lightweight-charts.standalone.production.js"></script>
+<script>if(!window.LightweightCharts)document.write('<script src="https://unpkg.com/lightweight-charts@5.0.0/dist/lightweight-charts.standalone.production.js"><\\/script>')</script>
 <style>
 *{box-sizing:border-box}html,body{margin:0;background:#030507;color:#dce3ed;font:13px Arial,sans-serif}
 header{position:sticky;top:0;z-index:50;background:#030507f7;border-bottom:1px solid #11161d;padding:7px 8px}
 .nav{display:flex;align-items:center;gap:5px;flex-wrap:wrap}.nav button{border:1px solid #171f29;background:#080b10;color:#aeb9c8;border-radius:6px;padding:7px 10px;cursor:pointer}.nav button.active{background:#111d2b;border-color:#365778;color:#fff}.tf{margin-left:auto;display:flex;gap:3px}.tf button{min-width:42px}.grid{display:grid;grid-template-columns:repeat(5,minmax(210px,1fr));gap:5px;padding:5px}
 .card{height:270px;background:#070a0e;border:1px solid #121821;border-radius:6px;overflow:hidden}.head{height:32px;display:flex;align-items:center;justify-content:space-between;padding:5px 7px;border-bottom:1px solid #121821}.left{display:flex;align-items:center;min-width:0}.rank{color:#526074;margin-right:4px}.symbol{font-weight:800}.exchange{color:#596678;font-size:9px;margin-left:5px}.price{color:#8794a6;font-size:11px}.fav{border:0;background:transparent;color:#566274;font-size:16px;padding:0 3px;margin-left:4px;cursor:pointer}.fav.on{color:#f4c84b}.chart{height:237px}.msg{height:100%;display:grid;place-items:center;color:#566579}
-.tools{display:none;position:fixed;top:52px;left:7px;right:7px;z-index:45;background:#070a0e;border:1px solid #202a35;border-radius:8px;padding:9px;box-shadow:0 15px 45px #000b}.tools.open{display:block}.search{display:flex;gap:5px}.search input{flex:1;background:#080b10;color:#dce3ed;border:1px solid #1d2732;border-radius:6px;padding:8px}.results{margin-top:6px;max-height:260px;overflow:auto}.row{display:flex;align-items:center;justify-content:space-between;padding:8px 3px;border-bottom:1px solid #121821}.row small{color:#687789}.row button{background:#0c1420;color:#c9d6e6;border:1px solid #263b52;border-radius:5px;padding:5px 9px}.hint{font-size:11px;color:#687789;margin:0 0 7px}
+.watchSearch{display:none;position:relative;min-width:180px}.watchSearch.open{display:block}.watchSearch input{width:100%;background:#080b10;color:#dce3ed;border:1px solid #263241;border-radius:6px;padding:7px 9px}.results{position:absolute;top:40px;left:0;right:0;z-index:100;background:#070a0e;border:1px solid #202a35;border-radius:7px;box-shadow:0 15px 45px #000b;max-height:300px;overflow:auto}.row{display:flex;align-items:center;justify-content:space-between;padding:8px;border-bottom:1px solid #121821}.row small{color:#687789}.row button{background:#0c1420;color:#c9d6e6;border:1px solid #263b52;border-radius:5px;padding:5px 9px}
 @media(max-width:1200px){.grid{grid-template-columns:repeat(4,minmax(200px,1fr))}}@media(max-width:900px){.grid{grid-template-columns:repeat(3,minmax(190px,1fr))}}
-@media(max-width:700px){.grid{grid-template-columns:repeat(2,minmax(165px,1fr));gap:4px;padding:4px}.card{height:235px}.chart{height:203px}.tf{margin-left:0}.nav button{padding:7px 8px}}
+@media(max-width:700px){.watchSearch{order:10;flex:1;min-width:150px}.grid{grid-template-columns:repeat(2,minmax(165px,1fr));gap:4px;padding:4px}.card{height:235px}.chart{height:203px}.tf{margin-left:0}.nav button{padding:7px 8px}}
 @media(max-width:430px){.grid{grid-template-columns:1fr}.card{height:240px}.chart{height:208px}}
 </style></head>
 <body>
@@ -21,12 +22,12 @@ header{position:sticky;top:0;z-index:50;background:#030507f7;border-bottom:1px s
 <button class="view" data-view="daily">Daily Watchlist</button>
 <button class="view" data-view="weekly">Weekly Watchlist</button>
 <button class="view" data-view="long">Long-Term Watchlist</button>
+<div id="watchSearch" class="watchSearch"><input id="search" placeholder="Search coins…"><div id="results" class="results"></div></div>
 <div class="tf"><button class="tfbtn" data-tf="15m">15m</button><button class="tfbtn active" data-tf="1h">1H</button><button class="tfbtn" data-tf="4h">4H</button></div>
 </div></header>
-<div id="tools" class="tools"><div id="hint" class="hint">Search any coin to add it to this watchlist.</div><div class="search"><input id="search" placeholder="Search any coin…"></div><div id="results" class="results"></div></div>
 <main id="grid" class="grid"></main>
 <script>
-const $=s=>document.querySelector(s),grid=$("#grid"),tools=$("#tools"),search=$("#search"),results=$("#results");
+const $=s=>document.querySelector(s),grid=$("#grid"),watchSearch=$("#watchSearch"),search=$("#search"),results=$("#results");
 const stable=new Set(["USDT","USDC","FDUSD","TUSD","USDE","DAI","USDS","USDD","PYUSD","USD1","USDP","GUSD","FRAX","LUSD","USTC","EURC","EURT","EURS","USDB","USDY","USDM","RLUSD"]);
 const read=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch{return d}},write=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
 let view="top",tf="1h",topCoins=[],markets=null,marketPromise=null;
@@ -37,21 +38,15 @@ const sym=x=>String(x||"").toUpperCase(), key=c=>c.id||sym(c.symbol), stableCoin
 async function getJSON(u){const r=await fetch(u);if(!r.ok)throw Error("HTTP "+r.status);return r.json()}
 
 async function loadTop(){
-  try{
-    const a=await getJSON("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false");
-    if(Array.isArray(a)&&a.length)return a.filter(c=>!stableCoin(c)).map(c=>({id:c.id,name:c.name,symbol:sym(c.symbol),rank:c.market_cap_rank}));
-  }catch(e){console.warn(e)}
-  const a=await getJSON("https://api.binance.com/api/v3/ticker/24hr");
-  return a.filter(x=>x.symbol.endsWith("USDT")).filter(x=>!stable.has(x.symbol.slice(0,-4))).sort((a,b)=>+b.quoteVolume-+a.quoteVolume).slice(0,100).map((x,i)=>({id:x.symbol,name:x.symbol,symbol:x.symbol.slice(0,-4),rank:i+1}));
+  const a=await getJSON("/api/top");
+  if(!Array.isArray(a)||!a.length) throw Error("Top list unavailable");
+  return a;
 }
 async function getMarkets(){
-  if(markets)return markets;if(marketPromise)return marketPromise;
-  marketPromise=(async()=>{
-    const m=new Map();
-    try{const a=await getJSON("https://api.binance.com/api/v3/exchangeInfo");for(const x of a.symbols||[])if(x.status==="TRADING"&&x.quoteAsset==="USDT")m.set(sym(x.baseAsset),{exchange:"Binance",pair:x.symbol})}catch(e){console.warn("Binance",e)}
-    if(!m.size)try{const a=await getJSON("https://api.bybit.com/v5/market/instruments-info?category=spot&limit=1000");for(const x of a.result?.list||[])if(x.status==="Trading"&&x.quoteCoin==="USDT")m.set(sym(x.baseCoin),{exchange:"Bybit",pair:x.symbol})}catch(e){console.warn("Bybit",e)}
-    markets=m;return m;
-  })();return marketPromise;
+  if(markets)return markets;
+  const data=await getJSON("/api/markets");
+  markets=new Map(Object.entries(data));
+  return markets;
 }
 async function resolve(c){
   const m=await getMarkets(),s=sym(c.symbol);
@@ -59,11 +54,12 @@ async function resolve(c){
   return null;
 }
 async function candles(c,t){
-  const k=c.market.exchange+"|"+c.market.pair+"|"+t;if(dataCache.has(k))return dataCache.get(k);
-  const cfg=t==="15m"?["15m","15"]:t==="4h"?["4h","240"]:["1h","60"];
-  const u=c.market.exchange==="Binance"?`https://api.binance.com/api/v3/klines?symbol=${c.market.pair}&interval=${cfg[0]}&limit=200`:`https://api.bybit.com/v5/market/kline?category=spot&symbol=${c.market.pair}&interval=${cfg[1]}&limit=200`;
-  const j=await getJSON(u),a=c.market.exchange==="Binance"?j:j.result?.list||[];
-  const rows=a.map(x=>({time:Math.floor(+x[0]/1000),open:+x[1],high:+x[2],low:+x[3],close:+x[4],volume:+x[5]})).sort((a,b)=>a.time-b.time);
+  const k=c.market.exchange+"|"+c.market.pair+"|"+t;
+  if(dataCache.has(k))return dataCache.get(k);
+  const interval=t==="15m"?"15":t==="4h"?"240":"60";
+  const raw=await getJSON("/api/candles?exchange="+encodeURIComponent(c.market.exchange)+"&pair="+encodeURIComponent(c.market.pair)+"&interval="+interval);
+  const rows=raw.map(x=>({time:Math.floor(+x[0]/1000),open:+x[1],high:+x[2],low:+x[3],close:+x[4],volume:+x[5]})).sort((a,b)=>a.time-b.time);
+  if(!rows.length)throw Error("No candle data");
   dataCache.set(k,rows);return rows;
 }
 async function createRecord(c){
@@ -89,28 +85,37 @@ async function paint(rec,t){
   }catch(e){console.warn(e);rec.card.querySelector(".chart").innerHTML='<div class="msg">Market data unavailable</div>'}
 }
 function fit(rec,rows){const n=Math.min(innerWidth<700?34:52,rows.length);rec.chart.timeScale().setVisibleLogicalRange({from:Math.max(0,rows.length-n-1),to:rows.length+1})}
-const observer=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){const rec=records.get(e.target.dataset.key);if(rec)paint(rec,tf);observer.unobserve(e.target)}}),{rootMargin:"700px"});
 async function render(){
   grid.innerHTML="";
-  let raw=view==="top"?topCoins:view==="favorites"?[...topCoins,...lists.daily,...lists.weekly,...lists.long].filter((c,i,a)=>favorites.has(key(c))&&a.findIndex(x=>key(x)===key(c))===i):lists[view]||[];
+  let raw=view==="top"?topCoins:view==="favorites"?[...new Map([...topCoins,...lists.daily,...lists.weekly,...lists.long].map(c=>[key(c),c])).values()].filter(c=>favorites.has(key(c))):(lists[view]||[]);
   if(!raw.length){grid.innerHTML='<div class="msg" style="padding:30px">No coins in this list yet.</div>';updateTools();return}
-  const resolved=[];const m=await getMarkets();
-  for(const c of raw){const r=m.has(sym(c.symbol))?{...c,market:m.get(sym(c.symbol))}:null;if(r)resolved.push(r)}
-  for(const c of resolved){const rec=await createRecord(c);rec.coin=c;rec.card.dataset.key=key(c);grid.appendChild(rec.card);observer.observe(rec.card)}
+  const m=await getMarkets();
+  const resolved=raw.map(c=>m.has(sym(c.symbol))?{...c,market:m.get(sym(c.symbol))}:null).filter(Boolean);
+  // Paint visible first batch immediately, then continue.
+  for(let i=0;i<resolved.length;i++){
+    const rec=await createRecord(resolved[i]);rec.coin=resolved[i];rec.card.dataset.key=key(resolved[i]);grid.appendChild(rec.card);
+    paint(rec,tf);
+    if(i>=29) await new Promise(r=>setTimeout(r,0));
+  }
   updateTools();
 }
-function updateTools(){const open=view==="daily"||view==="weekly"||view==="long";tools.classList.toggle("open",open);$("#hint").textContent=open?`Search any coin to add it to the ${view==="daily"?"Daily":view==="weekly"?"Weekly":"Long-Term"} Watchlist.`:""}
+function updateTools(){
+  const open=view==="daily"||view==="weekly"||view==="long";
+  watchSearch.classList.toggle("open",open);
+  if(!open){search.value="";results.innerHTML="";}
+}
 document.querySelectorAll(".view").forEach(b=>b.onclick=()=>{view=b.dataset.view;document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x===b));render()});
 document.querySelectorAll(".tfbtn").forEach(b=>b.onclick=()=>{if(tf===b.dataset.tf)return;tf=b.dataset.tf;document.querySelectorAll(".tfbtn").forEach(x=>x.classList.toggle("active",x===b));for(const rec of records.values())if(grid.contains(rec.card))paint(rec,tf)});
+document.addEventListener("click",e=>{if(!watchSearch.contains(e.target)&&!e.target.closest(".view")){results.innerHTML="";}});
 let timer;search.addEventListener("input",()=>{clearTimeout(timer);const q=search.value.trim();timer=setTimeout(()=>searchCoins(q),250)});
 async function searchCoins(q){
   if(q.length<2){results.innerHTML="";return}
   try{
-    const j=await getJSON("https://api.coingecko.com/api/v3/search?query="+encodeURIComponent(q));
+    const j=await getJSON("/api/search?q="+encodeURIComponent(q));
     const rows=(j.coins||[]).filter(x=>!stableCoin({symbol:x.symbol,name:x.name})).slice(0,12);
     results.innerHTML=rows.map((x,i)=>`<div class="row"><span><b>${esc(sym(x.symbol))}</b> <small>${esc(x.name)}</small></span><button data-i="${i}">Add</button></div>`).join("")||'<div class="row"><small>No coins found.</small></div>';
     results.querySelectorAll("[data-i]").forEach(btn=>btn.onclick=async()=>{const x=rows[+btn.dataset.i],c=await resolve({id:x.id,name:x.name,symbol:x.symbol.toUpperCase(),rank:null});if(!c){btn.textContent="No USDT market";return}if(!lists[view].some(y=>key(y)===key(c))){lists[view].push(c);write("crypto-watchlists-v14",lists)}search.value="";results.innerHTML="";await render()});
   }catch(e){results.innerHTML='<div class="row"><small>Search unavailable.</small></div>'}
 }
-(async()=>{try{topCoins=await loadTop();await getMarkets();await render()}catch(e){console.error(e);grid.innerHTML='<div class="msg" style="padding:30px">Could not load the coin list. Please refresh the page.</div>'}})();
+(async()=>{try{topCoins=await loadTop();await getMarkets();await render()}catch(e){console.error(e);grid.innerHTML='<div class="msg" style="padding:30px">Unable to load market data. Please refresh the page.</div>'}})();
 </script></body></html>
