@@ -30,8 +30,8 @@ header{position:sticky;top:0;z-index:50;background:#030507f7;border-bottom:1px s
 const $=s=>document.querySelector(s),grid=$("#grid"),watchSearch=$("#watchSearch"),search=$("#search"),results=$("#results");
 const stable=new Set(["USDT","USDC","FDUSD","TUSD","USDE","DAI","USDS","USDD","PYUSD","USD1","USDP","GUSD","FRAX","LUSD","USTC","EURC","EURT","EURS","USDB","USDY","USDM","RLUSD"]);
 const read=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch{return d}},write=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-let view="top",tf="1h",topCoins=[],markets=null,marketPromise=null;
-let lists=read("crypto-watchlists-v14",{daily:[],weekly:[],long:[]}),favorites=new Set(read("crypto-favorites-v14",[]));
+let view="top",tf="1h",topCoins=[];
+let lists=read("crypto-watchlists-v14",read("crypto-watchlists-v13",{daily:[],weekly:[],long:[]})),favorites=new Set(read("crypto-favorites-v14",read("crypto-favorites-v13",[])));
 const records=new Map(),dataCache=new Map();
 const esc=x=>String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
 const sym=x=>String(x||"").toUpperCase(), key=c=>c.id||sym(c.symbol), stableCoin=c=>stable.has(sym(c.symbol))||/stablecoin|tether|usd coin|dai/i.test(c.name||"");
@@ -42,30 +42,22 @@ async function loadTop(){
   if(!Array.isArray(a)||!a.length) throw Error("Top list unavailable");
   return a;
 }
-async function getMarkets(){
-  if(markets)return markets;
-  const data=await getJSON("/api/markets");
-  markets=new Map(Object.entries(data));
-  return markets;
-}
-async function resolve(c){
-  const m=await getMarkets(),s=sym(c.symbol);
-  if(m.has(s))return {...c,market:m.get(s)};
-  return null;
-}
 async function candles(c,t){
-  const k=c.market.exchange+"|"+c.market.pair+"|"+t;
-  if(dataCache.has(k))return dataCache.get(k);
+  const symbol=sym(c.symbol);
+  const k=symbol+"|"+t;
+  if(dataCache.has(k)) return dataCache.get(k);
   const interval=t==="15m"?"15":t==="4h"?"240":"60";
-  const raw=await getJSON("/api/candles?exchange="+encodeURIComponent(c.market.exchange)+"&pair="+encodeURIComponent(c.market.pair)+"&interval="+interval);
-  const rows=raw.map(x=>({time:Math.floor(+x[0]/1000),open:+x[1],high:+x[2],low:+x[3],close:+x[4],volume:+x[5]})).sort((a,b)=>a.time-b.time);
-  if(!rows.length)throw Error("No candle data");
-  dataCache.set(k,rows);return rows;
+  const raw=await getJSON("/api/candles?symbol="+encodeURIComponent(symbol)+"&interval="+interval);
+  if(!raw?.rows?.length) throw Error("No candle data");
+  const rows=raw.rows.map(x=>({time:Math.floor(Number(x[0])/1000),open:Number(x[1]),high:Number(x[2]),low:Number(x[3]),close:Number(x[4]),volume:Number(x[5])}))
+    .sort((a,b)=>a.time-b.time);
+  dataCache.set(k,rows);
+  return rows;
 }
 async function createRecord(c){
   const k=key(c), old=records.get(k);if(old)return old;
   const card=document.createElement("section");card.className="card";
-  card.innerHTML=`<div class="head"><div class="left"><span class="rank">#${c.rank||""}</span><span class="symbol">${esc(c.symbol)}</span><button class="fav ${favorites.has(k)?"on":""}" title="Favorite">★</button><span class="exchange">${c.market?.exchange||""}</span></div><span class="price">…</span></div><div class="chart"><div class="msg">Loading…</div></div>`;
+  card.innerHTML=`<div class="head"><div class="left"><span class="rank">#${c.rank||""}</span><span class="symbol">${esc(c.symbol)}</span><button class="fav ${favorites.has(k)?"on":""}" title="Favorite">★</button><span class="exchange">${c.market?.exchange||"Market"}</span></div><span class="price">…</span></div><div class="chart"><div class="msg">Loading…</div></div>`;
   const box=card.querySelector(".chart");
   const chart=LightweightCharts.createChart(box,{width:box.clientWidth,height:box.clientHeight,layout:{background:{type:"solid",color:"#070a0e"},textColor:"#687789"},grid:{vertLines:{visible:false},horzLines:{visible:false}},rightPriceScale:{borderColor:"#111820",scaleMargins:{top:.08,bottom:.30}},timeScale:{borderColor:"#111820",timeVisible:true,rightOffset:2,barSpacing:6},crosshair:{mode:2,vertLine:{visible:false},horzLine:{visible:false}},attributionLogo:false});
   const cs=chart.addSeries(LightweightCharts.CandlestickSeries,{upColor:"#22a884",downColor:"#e65353",borderUpColor:"#22a884",borderDownColor:"#e65353",wickUpColor:"#22a884",wickDownColor:"#e65353"});
@@ -77,25 +69,48 @@ async function createRecord(c){
   return rec;
 }
 async function paint(rec,t){
-  if(rec.loaded[t]){const rows=rec.loaded[t];rec.cs.setData(rows);rec.vs.setData(rows.map(x=>({time:x.time,value:x.volume,color:x.close>=x.open?"#22a88455":"#e6535355"})));fit(rec,rows);rec.card.querySelector(".price").textContent="$"+rows.at(-1).close.toLocaleString(undefined,{maximumFractionDigits:8});return}
+  if(rec.loaded[t]){
+    const rows=rec.loaded[t];
+    rec.cs.setData(rows);rec.vs.setData(rows.map(x=>({time:x.time,value:x.volume,color:x.close>=x.open?"#22a88455":"#e6535355"})));
+    fit(rec,rows);rec.card.querySelector(".price").textContent="$"+rows.at(-1).close.toLocaleString(undefined,{maximumFractionDigits:8});return;
+  }
   try{
-    const rows=await candles(rec.coin,t);rec.loaded[t]=rows;
-    rec.cs.setData(rows);rec.vs.setData(rows.map(x=>({time:x.time,value:x.volume,color:x.close>=x.open?"#22a88455":"#e6535355"})));fit(rec,rows);
-    rec.card.querySelector(".price").textContent="$"+(rows.at(-1)?.close||0).toLocaleString(undefined,{maximumFractionDigits:8});
-  }catch(e){console.warn(e);rec.card.querySelector(".chart").innerHTML='<div class="msg">Market data unavailable</div>'}
+    const symbol=sym(rec.coin.symbol);
+    const raw=await getJSON("/api/candles?symbol="+encodeURIComponent(symbol)+"&interval="+(t==="15m"?"15":t==="4h"?"240":"60"));
+    if(!raw?.rows?.length) throw Error("No candle data");
+    rec.coin.market={exchange:raw.exchange,pair:raw.pair};
+    const rows=raw.rows.map(x=>({time:Math.floor(Number(x[0])/1000),open:Number(x[1]),high:Number(x[2]),low:Number(x[3]),close:Number(x[4]),volume:Number(x[5])})).sort((a,b)=>a.time-b.time);
+    rec.loaded[t]=rows;
+    rec.cs.setData(rows);rec.vs.setData(rows.map(x=>({time:x.time,value:x.volume,color:x.close>=x.open?"#22a88455":"#e6535355"})));
+    fit(rec,rows);
+    rec.card.querySelector(".exchange").textContent=raw.exchange;
+    rec.card.querySelector(".price").textContent="$"+rows.at(-1).close.toLocaleString(undefined,{maximumFractionDigits:8});
+  }catch(e){
+    console.warn("Candle load failed",rec.coin.symbol,e);
+    rec.card.querySelector(".chart").innerHTML='<div class="msg">Market data unavailable</div>';
+  }
 }
 function fit(rec,rows){const n=Math.min(innerWidth<700?34:52,rows.length);rec.chart.timeScale().setVisibleLogicalRange({from:Math.max(0,rows.length-n-1),to:rows.length+1})}
 async function render(){
   grid.innerHTML="";
-  let raw=view==="top"?topCoins:view==="favorites"?[...new Map([...topCoins,...lists.daily,...lists.weekly,...lists.long].map(c=>[key(c),c])).values()].filter(c=>favorites.has(key(c))):(lists[view]||[]);
-  if(!raw.length){grid.innerHTML='<div class="msg" style="padding:30px">No coins in this list yet.</div>';updateTools();return}
-  const m=await getMarkets();
-  const resolved=raw.map(c=>m.has(sym(c.symbol))?{...c,market:m.get(sym(c.symbol))}:null).filter(Boolean);
-  // Paint visible first batch immediately, then continue.
-  for(let i=0;i<resolved.length;i++){
-    const rec=await createRecord(resolved[i]);rec.coin=resolved[i];rec.card.dataset.key=key(resolved[i]);grid.appendChild(rec.card);
+  const raw=view==="top"
+    ? topCoins
+    : view==="favorites"
+      ? [...new Map([...topCoins,...lists.daily,...lists.weekly,...lists.long].map(c=>[key(c),c])).values()].filter(c=>favorites.has(key(c)))
+      : (lists[view]||[]);
+
+  if(!raw.length){
+    grid.innerHTML='<div class="msg" style="padding:30px">No coins in this list yet.</div>';
+    updateTools(); return;
+  }
+
+  // Render cards immediately. Do NOT wait for market metadata.
+  for(const c of raw){
+    const rec=await createRecord({...c,market:null});
+    rec.coin={...c,market:null};
+    rec.card.dataset.key=key(c);
+    grid.appendChild(rec.card);
     paint(rec,tf);
-    if(i>=29) await new Promise(r=>setTimeout(r,0));
   }
   updateTools();
 }
@@ -117,5 +132,5 @@ async function searchCoins(q){
     results.querySelectorAll("[data-i]").forEach(btn=>btn.onclick=async()=>{const x=rows[+btn.dataset.i],c=await resolve({id:x.id,name:x.name,symbol:x.symbol.toUpperCase(),rank:null});if(!c){btn.textContent="No USDT market";return}if(!lists[view].some(y=>key(y)===key(c))){lists[view].push(c);write("crypto-watchlists-v14",lists)}search.value="";results.innerHTML="";await render()});
   }catch(e){results.innerHTML='<div class="row"><small>Search unavailable.</small></div>'}
 }
-(async()=>{try{topCoins=await loadTop();await getMarkets();await render()}catch(e){console.error(e);grid.innerHTML='<div class="msg" style="padding:30px">Unable to load market data. Please refresh the page.</div>'}})();
+(async()=>{try{topCoins=await loadTop();await render()}catch(e){console.error(e);grid.innerHTML='<div class="msg" style="padding:30px">Unable to load market data. Please refresh the page.</div>'}})();
 </script></body></html>

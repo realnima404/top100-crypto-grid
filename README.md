@@ -1,2 +1,10 @@
-# Crypto Grid V15
-Server-side API proxy removes browser CORS/API issues that caused charts to remain on Loading. Header contains Top 100, Favorites, Daily/Weekly/Long-Term Watchlists, inline watchlist search, and 15m/1H/4H. Search closes when clicking outside. Watchlists can contain coins outside Top 100. Binance with Bybit fallback. 200 candles, volume, no grid lines, no branding, 2-bar right offset. Chart instances and candle data are cached across timeframe switches.
+# Crypto Grid V16
+
+Robust chart loading architecture:
+- Cards render immediately without waiting for exchange metadata.
+- Server proxy resolves Binance first and Bybit second for each symbol.
+- 200 candles, volume, dark theme, no grid lines, 2-bar right offset.
+- Chart instances persist across 15m / 1H / 4H; candle data is cached.
+- Header contains Top 100, Favorites, Daily Watchlist, Weekly Watchlist, Long-Term Watchlist, timeframe buttons.
+- Watchlist search is in the header and supports coins outside Top 100.
+- Search closes when clicking elsewhere.
