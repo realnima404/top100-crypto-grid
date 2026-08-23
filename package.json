@@ -1,6 +1,6 @@
 {
-  "name": "top100-crypto-grid",
-  "version": "13.0.0",
+  "name": "crypto-grid",
+  "version": "14.0.0",
   "private": true,
   "type": "module",
   "scripts": {

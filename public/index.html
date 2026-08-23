@@ -1,343 +1,116 @@
 <!doctype html>
 <html lang="en" dir="ltr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Crypto Grid V13</title>
-<script src="https://unpkg.com/lightweight-charts@5.0.0/dist/lightweight-charts.standalone.production.js"></script>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Crypto Grid</title>
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.0.0/dist/lightweight-charts.standalone.production.js"></script>
 <style>
-*{box-sizing:border-box}
-html,body{margin:0;background:#030507;color:#d9e0ea;font:13px Inter,Arial,sans-serif}
-body{overflow-y:scroll}
-header{position:sticky;top:0;z-index:50;background:#030507f7;border-bottom:1px solid #11161d;padding:7px 8px;backdrop-filter:blur(8px)}
-.nav{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
-.nav button{border:1px solid #171f29;background:#080b10;color:#aeb9c8;border-radius:6px;padding:7px 10px;cursor:pointer}
-.nav button:hover{background:#0e141c}
-.nav button.active{background:#111d2b;border-color:#365778;color:#f0f5fb}
-.tf{display:flex;gap:3px;margin-left:auto}.tf button{min-width:42px;padding:7px 8px}
-.status{color:#596879;font-size:10px;margin-left:4px;display:none}
-.watch-tools{display:none;background:#070a0e;border-bottom:1px solid #11161d;padding:8px;gap:6px;align-items:center}
-.watch-tools.open{display:flex}
-.watch-tools input{flex:1;min-width:180px;background:#090d12;color:#d9e0ea;border:1px solid #1a2530;border-radius:6px;padding:8px}
-.search-results{position:absolute;left:8px;right:8px;top:43px;background:#080c11;border:1px solid #1c2632;border-radius:7px;z-index:60;max-height:320px;overflow:auto;display:none}
-.search-results.open{display:block}
-.search-row{display:flex;justify-content:space-between;align-items:center;padding:9px 10px;border-bottom:1px solid #111820}
-.search-row small{color:#657386}
-.search-row button{background:#101923;color:#dce7f4;border:1px solid #26374a;border-radius:5px;padding:5px 8px}
-.grid{display:grid;grid-template-columns:repeat(5,minmax(220px,1fr));gap:5px;padding:5px}
-.card{height:270px;background:#06090d;border:1px solid #111820;border-radius:6px;overflow:hidden}
-.head{height:32px;padding:5px 7px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #111820}
-.left{display:flex;align-items:center;min-width:0}.rank{color:#4e5d6f;margin-right:5px}.symbol{font-weight:800}.exchange{font-size:9px;color:#536173;margin-left:5px}.price{font-size:10px;color:#788697}
-.chart{height:238px}.msg{height:100%;display:grid;place-items:center;color:#4f5d6e;font-size:11px}
-.star{border:0!important;background:transparent!important;padding:0 2px!important;margin-left:4px;font-size:15px;color:#445164;cursor:pointer}
-.star.on{color:#f1c84a}
-.tv-lightweight-charts a,.tv-lightweight-charts [class*=attribution],.tv-lightweight-charts [class*=logo],a[href*=tradingview]{display:none!important;visibility:hidden!important;opacity:0!important}
-@media(max-width:1200px){.grid{grid-template-columns:repeat(4,minmax(210px,1fr))}}
-@media(max-width:900px){.grid{grid-template-columns:repeat(3,minmax(200px,1fr))}}
-@media(max-width:700px){
- header{padding:5px}.nav{gap:3px}.nav button{padding:7px 8px;font-size:12px}.status{width:100%;margin:0}
- .tf{margin-left:0}.grid{grid-template-columns:repeat(2,minmax(165px,1fr));gap:4px;padding:4px}
- .card{height:235px}.chart{height:203px}
-}
+*{box-sizing:border-box}html,body{margin:0;background:#030507;color:#dce3ed;font:13px Arial,sans-serif}
+header{position:sticky;top:0;z-index:50;background:#030507f7;border-bottom:1px solid #11161d;padding:7px 8px}
+.nav{display:flex;align-items:center;gap:5px;flex-wrap:wrap}.nav button{border:1px solid #171f29;background:#080b10;color:#aeb9c8;border-radius:6px;padding:7px 10px;cursor:pointer}.nav button.active{background:#111d2b;border-color:#365778;color:#fff}.tf{margin-left:auto;display:flex;gap:3px}.tf button{min-width:42px}.grid{display:grid;grid-template-columns:repeat(5,minmax(210px,1fr));gap:5px;padding:5px}
+.card{height:270px;background:#070a0e;border:1px solid #121821;border-radius:6px;overflow:hidden}.head{height:32px;display:flex;align-items:center;justify-content:space-between;padding:5px 7px;border-bottom:1px solid #121821}.left{display:flex;align-items:center;min-width:0}.rank{color:#526074;margin-right:4px}.symbol{font-weight:800}.exchange{color:#596678;font-size:9px;margin-left:5px}.price{color:#8794a6;font-size:11px}.fav{border:0;background:transparent;color:#566274;font-size:16px;padding:0 3px;margin-left:4px;cursor:pointer}.fav.on{color:#f4c84b}.chart{height:237px}.msg{height:100%;display:grid;place-items:center;color:#566579}
+.tools{display:none;position:fixed;top:52px;left:7px;right:7px;z-index:45;background:#070a0e;border:1px solid #202a35;border-radius:8px;padding:9px;box-shadow:0 15px 45px #000b}.tools.open{display:block}.search{display:flex;gap:5px}.search input{flex:1;background:#080b10;color:#dce3ed;border:1px solid #1d2732;border-radius:6px;padding:8px}.results{margin-top:6px;max-height:260px;overflow:auto}.row{display:flex;align-items:center;justify-content:space-between;padding:8px 3px;border-bottom:1px solid #121821}.row small{color:#687789}.row button{background:#0c1420;color:#c9d6e6;border:1px solid #263b52;border-radius:5px;padding:5px 9px}.hint{font-size:11px;color:#687789;margin:0 0 7px}
+@media(max-width:1200px){.grid{grid-template-columns:repeat(4,minmax(200px,1fr))}}@media(max-width:900px){.grid{grid-template-columns:repeat(3,minmax(190px,1fr))}}
+@media(max-width:700px){.grid{grid-template-columns:repeat(2,minmax(165px,1fr));gap:4px;padding:4px}.card{height:235px}.chart{height:203px}.tf{margin-left:0}.nav button{padding:7px 8px}}
 @media(max-width:430px){.grid{grid-template-columns:1fr}.card{height:240px}.chart{height:208px}}
-</style>
-</head>
+</style></head>
 <body>
-<header>
-<div class="nav">
+<header><div class="nav">
 <button class="view active" data-view="top">Top 100</button>
 <button class="view" data-view="favorites">Favorites</button>
 <button class="view" data-view="daily">Daily Watchlist</button>
 <button class="view" data-view="weekly">Weekly Watchlist</button>
 <button class="view" data-view="long">Long-Term Watchlist</button>
-<div class="tf">
-<button class="tfb" data-tf="15m">15m</button>
-<button class="tfb active" data-tf="1h">1H</button>
-<button class="tfb" data-tf="4h">4H</button>
-</div>
-<span id="status" class="status">Loading…</span>
-</div>
-<div id="watchTools" class="watch-tools">
-  <input id="watchSearch" type="search" placeholder="Search any coin to add to this watchlist…" autocomplete="off">
-  <span id="watchHint"></span>
-  <div id="searchResults" class="search-results"></div>
-</div>
-</header>
+<div class="tf"><button class="tfbtn" data-tf="15m">15m</button><button class="tfbtn active" data-tf="1h">1H</button><button class="tfbtn" data-tf="4h">4H</button></div>
+</div></header>
+<div id="tools" class="tools"><div id="hint" class="hint">Search any coin to add it to this watchlist.</div><div class="search"><input id="search" placeholder="Search any coin…"></div><div id="results" class="results"></div></div>
 <main id="grid" class="grid"></main>
-
 <script>
-const grid=document.getElementById('grid'), status=document.getElementById('status');
-const watchTools=document.getElementById('watchTools'), watchSearch=document.getElementById('watchSearch'), searchResults=document.getElementById('searchResults');
-let view='top', timeframe='1h', topCoins=[], symbolMap=null, symbolMapPromise=null, searchTimer=null;
-const chartRecords=new Map(); // persistent chart instances
-const dataCache=new Map();
-const favorites=new Set(JSON.parse(localStorage.getItem('crypto_favorites_v11')||'[]'));
-const lists=JSON.parse(localStorage.getItem('crypto_watchlists_v11')||'{"daily":[],"weekly":[],"long":[]}');
-
-const stable=new Set(['USDT','USDC','FDUSD','TUSD','USDE','DAI','USDS','USDD','PYUSD','USD1','USDP','GUSD','FRAX','LUSD','USTC','EURC','EURT','EURS','USDB','USDY','USDM','USDX','RLUSD']);
-
-function saveFav(){localStorage.setItem('crypto_favorites_v11',JSON.stringify([...favorites]));}
-function saveLists(){localStorage.setItem('crypto_watchlists_v11',JSON.stringify(lists));}
-function setStatus(t){status.textContent=t}
-function cleanSymbol(x){return String(x||'').toUpperCase()}
-function coinKey(c){return c.id||cleanSymbol(c.symbol)}
-function isStable(c){return stable.has(cleanSymbol(c.symbol)) || /stablecoin|tether|usd coin|dai/i.test(c.name||'')}
-function money(n){return Number(n).toLocaleString(undefined,{maximumFractionDigits:8})}
-
-async function fetchJSON(url,opts){
-  const r=await fetch(url,opts);
-  if(!r.ok) throw new Error('HTTP '+r.status);
-  return r.json();
-}
+const $=s=>document.querySelector(s),grid=$("#grid"),tools=$("#tools"),search=$("#search"),results=$("#results");
+const stable=new Set(["USDT","USDC","FDUSD","TUSD","USDE","DAI","USDS","USDD","PYUSD","USD1","USDP","GUSD","FRAX","LUSD","USTC","EURC","EURT","EURS","USDB","USDY","USDM","RLUSD"]);
+const read=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch{return d}},write=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+let view="top",tf="1h",topCoins=[],markets=null,marketPromise=null;
+let lists=read("crypto-watchlists-v14",{daily:[],weekly:[],long:[]}),favorites=new Set(read("crypto-favorites-v14",[]));
+const records=new Map(),dataCache=new Map();
+const esc=x=>String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+const sym=x=>String(x||"").toUpperCase(), key=c=>c.id||sym(c.symbol), stableCoin=c=>stable.has(sym(c.symbol))||/stablecoin|tether|usd coin|dai/i.test(c.name||"");
+async function getJSON(u){const r=await fetch(u);if(!r.ok)throw Error("HTTP "+r.status);return r.json()}
 
 async function loadTop(){
   try{
-    const j=await fetchJSON('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false');
-    if(Array.isArray(j)&&j.length) return j.filter(c=>!isStable(c)).map(c=>({
-      id:c.id,name:c.name,symbol:cleanSymbol(c.symbol),rank:c.market_cap_rank
-    }));
-  }catch(e){ console.warn('CoinGecko failed, using Binance fallback',e); }
-
-  // Reliable fallback: Binance 24h markets, sorted by quote volume.
-  const j=await fetchJSON('https://api.binance.com/api/v3/ticker/24hr');
-  return (j||[])
-    .filter(x=>x.symbol.endsWith('USDT') && !x.symbol.includes('UP') && !x.symbol.includes('DOWN') && !x.symbol.includes('BULL') && !x.symbol.includes('BEAR'))
-    .sort((a,b)=>Number(b.quoteVolume)-Number(a.quoteVolume))
-    .filter(x=>!isStable({symbol:x.symbol.slice(0,-4),name:''}))
-    .slice(0,100)
-    .map((x,i)=>({id:x.symbol,name:x.symbol,symbol:cleanSymbol(x.symbol.slice(0,-4)),rank:i+1}));
+    const a=await getJSON("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false");
+    if(Array.isArray(a)&&a.length)return a.filter(c=>!stableCoin(c)).map(c=>({id:c.id,name:c.name,symbol:sym(c.symbol),rank:c.market_cap_rank}));
+  }catch(e){console.warn(e)}
+  const a=await getJSON("https://api.binance.com/api/v3/ticker/24hr");
+  return a.filter(x=>x.symbol.endsWith("USDT")).filter(x=>!stable.has(x.symbol.slice(0,-4))).sort((a,b)=>+b.quoteVolume-+a.quoteVolume).slice(0,100).map((x,i)=>({id:x.symbol,name:x.symbol,symbol:x.symbol.slice(0,-4),rank:i+1}));
 }
-
-async function loadSymbolMap(){
-  if(symbolMap)return symbolMap;
-  if(symbolMapPromise)return symbolMapPromise;
-  symbolMapPromise=
-function watchlistView(){return ['daily','weekly','long'].includes(view)}
-function updateWatchTools(){
-  const open=watchlistView();
-  watchTools.classList.toggle('open',open);
-  if(open){
-    const names={daily:'Daily Watchlist',weekly:'Weekly Watchlist',long:'Long-Term Watchlist'};
-    document.getElementById('watchHint').textContent=names[view];
-    watchSearch.value='';
-    searchResults.classList.remove('open'); searchResults.innerHTML='';
-  }
+async function getMarkets(){
+  if(markets)return markets;if(marketPromise)return marketPromise;
+  marketPromise=(async()=>{
+    const m=new Map();
+    try{const a=await getJSON("https://api.binance.com/api/v3/exchangeInfo");for(const x of a.symbols||[])if(x.status==="TRADING"&&x.quoteAsset==="USDT")m.set(sym(x.baseAsset),{exchange:"Binance",pair:x.symbol})}catch(e){console.warn("Binance",e)}
+    if(!m.size)try{const a=await getJSON("https://api.bybit.com/v5/market/instruments-info?category=spot&limit=1000");for(const x of a.result?.list||[])if(x.status==="Trading"&&x.quoteCoin==="USDT")m.set(sym(x.baseCoin),{exchange:"Bybit",pair:x.symbol})}catch(e){console.warn("Bybit",e)}
+    markets=m;return m;
+  })();return marketPromise;
 }
-async function searchCoins(q){
-  if(!q || q.length<2){searchResults.classList.remove('open');return}
-  try{
-    const j=await fetchJSON('https://api.coingecko.com/api/v3/search?query='+encodeURIComponent(q));
-    const rows=(j.coins||[]).filter(x=>!isStable({symbol:x.symbol,name:x.name})).slice(0,12);
-    searchResults.innerHTML=rows.length?rows.map((x,i)=>`<div class="search-row"><span><b>${esc(x.symbol.toUpperCase())}</b> <small>${esc(x.name)}</small></span><button data-search-add="${i}">Add</button></div>`).join(''):'<div class="search-row"><small>No coins found</small></div>';
-    searchResults.classList.add('open');
-    document.querySelectorAll('[data-search-add]').forEach(btn=>btn.onclick=async()=>{
-      const x=rows[+btn.dataset.searchAdd];
-      const c=await resolveCoin({id:x.id,name:x.name,symbol:x.symbol.toUpperCase(),rank:null});
-      if(!c){btn.textContent='No market';return}
-      if(!lists[view].some(y=>coinKey(y)===coinKey(c))){
-        lists[view].push(c); saveLists();
-      }
-      searchResults.classList.remove('open'); watchSearch.value=''; render();
-    });
-  }catch(e){
-    searchResults.innerHTML='<div class="search-row"><small>Search unavailable right now</small></div>';
-    searchResults.classList.add('open');
-  }
-}
-watchSearch.addEventListener('input',e=>{
-  clearTimeout(searchTimer); const q=e.target.value.trim();
-  searchTimer=setTimeout(()=>searchCoins(q),220);
-});
-document.addEventListener('click',e=>{
-  if(!e.target.closest('.watch-tools'))searchResults.classList.remove('open');
-});
-(async()=>{
-    const map=new Map();
-    // One exchange-info request is much faster than probing 100 symbols one-by-one.
-    try{
-      const j=await fetchJSON('https://api.binance.com/api/v3/exchangeInfo');
-      for(const x of j.symbols||[]){
-        if(x.status==='TRADING' && x.quoteAsset==='USDT') map.set(cleanSymbol(x.baseAsset),{exchange:'Binance',pair:x.symbol});
-      }
-      if(map.size){symbolMap=map;return map;}
-    }catch(e){console.warn('Binance exchangeInfo failed',e)}
-    try{
-      const j=await fetchJSON('https://api.bybit.com/v5/market/instruments-info?category=spot&limit=1000');
-      for(const x of j.result?.list||[]){
-        if(x.status==='Trading' && x.quoteCoin==='USDT' && !map.has(cleanSymbol(x.baseCoin)))
-          map.set(cleanSymbol(x.baseCoin),{exchange:'Bybit',pair:x.symbol});
-      }
-    }catch(e){console.warn('Bybit instruments failed',e)}
-    symbolMap=map; return map;
-  })();
-  return symbolMapPromise;
-}
-
-async function resolveCoin(c){
-  const map=await loadSymbolMap();
-  const sym=cleanSymbol(c.symbol);
-  if(map.has(sym)) return {...c,market:map.get(sym)};
-  // Some Binance markets can be checked directly if exchangeInfo was incomplete.
-  const pair=sym+'USDT';
-  try{
-    const r=await fetch('https://api.binance.com/api/v3/klines?symbol='+encodeURIComponent(pair)+'&interval=1h&limit=1');
-    if(r.ok)return {...c,market:{exchange:'Binance',pair}};
-  }catch{}
+async function resolve(c){
+  const m=await getMarkets(),s=sym(c.symbol);
+  if(m.has(s))return {...c,market:m.get(s)};
   return null;
 }
-
-async function resolveCoin(c){
-  const sym=cleanSymbol(c.symbol);
-  // Most coins use SYMBOLUSDT on Binance. Probe the actual kline endpoint.
-  const binancePair=sym+'USDT';
-  try{
-    const r=await fetch('https://api.binance.com/api/v3/klines?symbol='+encodeURIComponent(binancePair)+'&interval=1h&limit=1');
-    if(r.ok) return {...c,market:{exchange:'Binance',pair:binancePair}};
-  }catch{}
-  const map=await loadSymbolMap();
-  if(map.has(sym)) return {...c,market:map.get(sym)};
-  return null;
+async function candles(c,t){
+  const k=c.market.exchange+"|"+c.market.pair+"|"+t;if(dataCache.has(k))return dataCache.get(k);
+  const cfg=t==="15m"?["15m","15"]:t==="4h"?["4h","240"]:["1h","60"];
+  const u=c.market.exchange==="Binance"?`https://api.binance.com/api/v3/klines?symbol=${c.market.pair}&interval=${cfg[0]}&limit=200`:`https://api.bybit.com/v5/market/kline?category=spot&symbol=${c.market.pair}&interval=${cfg[1]}&limit=200`;
+  const j=await getJSON(u),a=c.market.exchange==="Binance"?j:j.result?.list||[];
+  const rows=a.map(x=>({time:Math.floor(+x[0]/1000),open:+x[1],high:+x[2],low:+x[3],close:+x[4],volume:+x[5]})).sort((a,b)=>a.time-b.time);
+  dataCache.set(k,rows);return rows;
 }
-
-function endpoint(c){
-  const cfg=timeframe==='15m'?['15m','15']:timeframe==='4h'?['4h','240']:['1h','60'];
-  if(c.market.exchange==='Binance') return `https://api.binance.com/api/v3/klines?symbol=${c.market.pair}&interval=${cfg[0]}&limit=200`;
-  return `https://api.bybit.com/v5/market/kline?category=spot&symbol=${c.market.pair}&interval=${cfg[1]}&limit=200`;
-}
-
-async function loadCandles(c,tf){
-  const key=c.market.exchange+'|'+c.market.pair+'|'+tf;
-  if(dataCache.has(key)) return dataCache.get(key);
-  const cfg=tf==='15m'?['15m','15']:tf==='4h'?['4h','240']:['1h','60'];
-  const url=c.market.exchange==='Binance'
-    ?`https://api.binance.com/api/v3/klines?symbol=${c.market.pair}&interval=${cfg[0]}&limit=200`
-    :`https://api.bybit.com/v5/market/kline?category=spot&symbol=${c.market.pair}&interval=${cfg[1]}&limit=200`;
-  const j=await fetchJSON(url);
-  const raw=c.market.exchange==='Binance'?j:(j.result?.list||[]);
-  const rows=raw.map(x=>({time:Math.floor(+x[0]/1000),open:+x[1],high:+x[2],low:+x[3],close:+x[4],volume:+x[5]})).sort((a,b)=>a.time-b.time);
-  dataCache.set(key,rows); return rows;
-}
-
-async function resolveCoins(arr){
-  const out=[]; let i=0;
-  const workers=Math.min(innerWidth<700?4:10,arr.length);
-  async function worker(){
-    while(i<arr.length){
-      const c=arr[i++];
-      try{ const r=await resolveCoin(c); if(r) out.push(r); }catch{}
-    }
-  }
-  await Promise.all(Array.from({length:workers},worker));
-  return out;
-}
-
-function listCoins(){
-  if(view==='top') return topCoins;
-  if(view==='favorites'){
-    const pool=[...topCoins,...lists.daily,...lists.weekly,...lists.long];
-    const seen=new Set(); return pool.filter(c=>{const k=coinKey(c);if(seen.has(k)||!favorites.has(k))return false;seen.add(k);return true});
-  }
-  return (lists[view]||[]).filter(c=>!isStable(c));
-}
-
-function makeCard(c){
-  const k=coinKey(c);
-  let rec=chartRecords.get(k);
-  if(rec){rec.coin=c; rec.card.querySelector('.exchange').textContent=c.market?.exchange||''; return rec.card;}
-  const card=document.createElement('section'); card.className='card';
-  card.innerHTML=`<div class="head"><div class="left"><span class="rank">${c.rank?'#'+c.rank:''}</span><span class="symbol">${c.symbol}</span><button class="star ${favorites.has(k)?'on':''}" title="Favorite">★</button><span class="exchange">${c.market?.exchange||''}</span></div><span class="price">…</span></div><div class="chart"><div class="msg">Loading…</div></div>`;
-  const star=card.querySelector('.star');
-  star.onclick=()=>{
-    favorites.has(k)?favorites.delete(k):favorites.add(k); saveFav(); star.classList.toggle('on',favorites.has(k));
-  };
-  const box=card.querySelector('.chart');
-  const chart=LightweightCharts.createChart(box,{
-    width:box.clientWidth,height:box.clientHeight,
-    layout:{background:{type:'solid',color:'#06090d'},textColor:'#667386'},
-    grid:{vertLines:{visible:false},horzLines:{visible:false}},
-    rightPriceScale:{borderColor:'#111820',scaleMargins:{top:.08,bottom:.30}},
-    timeScale:{borderColor:'#111820',timeVisible:true,rightOffset:2,barSpacing:6},
-    crosshair:{mode:2,vertLine:{visible:false},horzLine:{visible:false}},
-    attributionLogo:false
-  });
-  // Correct timeScale config in case browser parser accepted object; reapply safely.
-  chart.applyOptions({timeScale:{borderColor:'#111820',timeVisible:true,rightOffset:2,barSpacing:6}});
-  const candle=chart.addSeries(LightweightCharts.CandlestickSeries,{upColor:'#26a69a',downColor:'#ef5350',borderUpColor:'#26a69a',borderDownColor:'#ef5350',wickUpColor:'#26a69a',wickDownColor:'#ef5350'});
-  const volume=chart.addSeries(LightweightCharts.HistogramSeries,{priceFormat:{type:'volume'},priceScaleId:'volume',priceLineVisible:false,lastValueVisible:false});
-  volume.priceScale().applyOptions({scaleMargins:{top:.78,bottom:.03}});
-  rec={card,chart,candle,volume,coin:c,dataByTf:new Map(),loadedTf:null};
-  chartRecords.set(k,rec);
+async function createRecord(c){
+  const k=key(c), old=records.get(k);if(old)return old;
+  const card=document.createElement("section");card.className="card";
+  card.innerHTML=`<div class="head"><div class="left"><span class="rank">#${c.rank||""}</span><span class="symbol">${esc(c.symbol)}</span><button class="fav ${favorites.has(k)?"on":""}" title="Favorite">★</button><span class="exchange">${c.market?.exchange||""}</span></div><span class="price">…</span></div><div class="chart"><div class="msg">Loading…</div></div>`;
+  const box=card.querySelector(".chart");
+  const chart=LightweightCharts.createChart(box,{width:box.clientWidth,height:box.clientHeight,layout:{background:{type:"solid",color:"#070a0e"},textColor:"#687789"},grid:{vertLines:{visible:false},horzLines:{visible:false}},rightPriceScale:{borderColor:"#111820",scaleMargins:{top:.08,bottom:.30}},timeScale:{borderColor:"#111820",timeVisible:true,rightOffset:2,barSpacing:6},crosshair:{mode:2,vertLine:{visible:false},horzLine:{visible:false}},attributionLogo:false});
+  const cs=chart.addSeries(LightweightCharts.CandlestickSeries,{upColor:"#22a884",downColor:"#e65353",borderUpColor:"#22a884",borderDownColor:"#e65353",wickUpColor:"#22a884",wickDownColor:"#e65353"});
+  const vs=chart.addSeries(LightweightCharts.HistogramSeries,{priceFormat:{type:"volume"},priceScaleId:"volume",priceLineVisible:false,lastValueVisible:false});vs.priceScale().applyOptions({scaleMargins:{top:.78,bottom:.03}});
+  const rec={coin:c,card,chart,cs,vs,loaded:{}};records.set(k,rec);
+  card.querySelector(".fav").onclick=()=>{favorites.has(k)?favorites.delete(k):favorites.add(k);write("crypto-favorites-v14",[...favorites]);card.querySelector(".fav").classList.toggle("on",favorites.has(k));if(view==="favorites")render()};
   new ResizeObserver(()=>chart.applyOptions({width:box.clientWidth,height:box.clientHeight})).observe(box);
-  return card;
+  box.addEventListener("mouseleave",()=>chart.clearCrosshairPosition());
+  return rec;
 }
-
-async function updateCard(c){
-  const rec=chartRecords.get(coinKey(c)); if(!rec)return;
+async function paint(rec,t){
+  if(rec.loaded[t]){const rows=rec.loaded[t];rec.cs.setData(rows);rec.vs.setData(rows.map(x=>({time:x.time,value:x.volume,color:x.close>=x.open?"#22a88455":"#e6535355"})));fit(rec,rows);rec.card.querySelector(".price").textContent="$"+rows.at(-1).close.toLocaleString(undefined,{maximumFractionDigits:8});return}
   try{
-    const rows=rec.dataByTf.has(timeframe)?rec.dataByTf.get(timeframe):await loadCandles(c,timeframe);
-    rec.dataByTf.set(timeframe,rows);
-    rec.candle.setData(rows);
-    rec.volume.setData(rows.map(x=>({time:x.time,value:x.volume,color:x.close>=x.open?'#26a69a55':'#ef535055'})));
-    const n=Math.min(innerWidth<700?34:50,rows.length);
-    rec.chart.timeScale().setVisibleLogicalRange({from:Math.max(0,rows.length-n-1),to:rows.length+1});
-    rec.card.querySelector('.price').textContent='$'+money(rows.at(-1)?.close||0);
-    rec.loadedTf=timeframe;
-  }catch(e){console.warn('Chart data failed',e); if(!rec.loadedTf) rec.card.querySelector('.chart').innerHTML='<div class="msg">Market data unavailable</div>'}
+    const rows=await candles(rec.coin,t);rec.loaded[t]=rows;
+    rec.cs.setData(rows);rec.vs.setData(rows.map(x=>({time:x.time,value:x.volume,color:x.close>=x.open?"#22a88455":"#e6535355"})));fit(rec,rows);
+    rec.card.querySelector(".price").textContent="$"+(rows.at(-1)?.close||0).toLocaleString(undefined,{maximumFractionDigits:8});
+  }catch(e){console.warn(e);rec.card.querySelector(".chart").innerHTML='<div class="msg">Market data unavailable</div>'}
 }
-
-let renderToken=0;
+function fit(rec,rows){const n=Math.min(innerWidth<700?34:52,rows.length);rec.chart.timeScale().setVisibleLogicalRange({from:Math.max(0,rows.length-n-1),to:rows.length+1})}
+const observer=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){const rec=records.get(e.target.dataset.key);if(rec)paint(rec,tf);observer.unobserve(e.target)}}),{rootMargin:"700px"});
 async function render(){
-  const token=++renderToken;
-  const raw=listCoins();
-  setStatus(`${raw.length} coins • ${timeframe}`);
-  if(!raw.length){grid.innerHTML='<div class="msg" style="padding:20px">This watchlist is empty.</div>';return}
-  // Reuse existing card DOM; do not rebuild on timeframe switches.
-  const resolved=await resolveCoins(raw);
-  if(token!==renderToken)return;
-  const wanted=new Set(resolved.map(coinKey));
-  for(const [k,rec] of chartRecords){ if(!wanted.has(k)){rec.card.remove();} }
-  grid.innerHTML='';
-  for(const c of resolved){
-    const card=makeCard(c); grid.appendChild(card);
-  }
-  // Initial charts: controlled parallelism; remaining cards are created now but data loads in small batches.
-  let i=0; const workers=Math.min(innerWidth<700?2:6,resolved.length);
-  async function worker(){
-    while(i<resolved.length){const c=resolved[i++]; await updateCard(c);}
-  }
-  await Promise.all(Array.from({length:workers},worker));
-  if(token===renderToken)setStatus(`${resolved.length} charts • ${timeframe}`);
+  grid.innerHTML="";
+  let raw=view==="top"?topCoins:view==="favorites"?[...topCoins,...lists.daily,...lists.weekly,...lists.long].filter((c,i,a)=>favorites.has(key(c))&&a.findIndex(x=>key(x)===key(c))===i):lists[view]||[];
+  if(!raw.length){grid.innerHTML='<div class="msg" style="padding:30px">No coins in this list yet.</div>';updateTools();return}
+  const resolved=[];const m=await getMarkets();
+  for(const c of raw){const r=m.has(sym(c.symbol))?{...c,market:m.get(sym(c.symbol))}:null;if(r)resolved.push(r)}
+  for(const c of resolved){const rec=await createRecord(c);rec.coin=c;rec.card.dataset.key=key(c);grid.appendChild(rec.card);observer.observe(rec.card)}
+  updateTools();
 }
-
-document.querySelectorAll('.view').forEach(b=>b.onclick=()=>{
-  view=b.dataset.view;
-  document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x===b));
-  updateWatchTools();
-  render();
-});
-document.querySelectorAll('.tfb').forEach(b=>b.onclick=()=>{
-  const next=b.dataset.tf;if(next===timeframe)return;
-  timeframe=next;
-  document.querySelectorAll('.tfb').forEach(x=>x.classList.toggle('active',x===b));
-  // IMPORTANT: cards/charts remain alive; only candle series data changes from cache/fetch.
-  render();
-});
-
-(async()=>{
+function updateTools(){const open=view==="daily"||view==="weekly"||view==="long";tools.classList.toggle("open",open);$("#hint").textContent=open?`Search any coin to add it to the ${view==="daily"?"Daily":view==="weekly"?"Weekly":"Long-Term"} Watchlist.`:""}
+document.querySelectorAll(".view").forEach(b=>b.onclick=()=>{view=b.dataset.view;document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x===b));render()});
+document.querySelectorAll(".tfbtn").forEach(b=>b.onclick=()=>{if(tf===b.dataset.tf)return;tf=b.dataset.tf;document.querySelectorAll(".tfbtn").forEach(x=>x.classList.toggle("active",x===b));for(const rec of records.values())if(grid.contains(rec.card))paint(rec,tf)});
+let timer;search.addEventListener("input",()=>{clearTimeout(timer);const q=search.value.trim();timer=setTimeout(()=>searchCoins(q),250)});
+async function searchCoins(q){
+  if(q.length<2){results.innerHTML="";return}
   try{
-    if(typeof LightweightCharts==='undefined'){
-      await new Promise((resolve,reject)=>{
-        const sc=document.createElement('script'); sc.src='https://cdn.jsdelivr.net/npm/lightweight-charts@5.0.0/dist/lightweight-charts.standalone.production.min.js';
-        sc.onload=resolve; sc.onerror=reject; document.head.appendChild(sc);
-      });
-    }
-    topCoins=await loadTop();
-    updateWatchTools();
-    await render();
-  }catch(e){
-    console.error(e); setStatus('Error loading data');
-    grid.innerHTML=`<div class="msg" style="padding:25px">Could not load the coin list. Refresh the page.</div>`;
-  }
-})();
-</script>
-</body></html>
+    const j=await getJSON("https://api.coingecko.com/api/v3/search?query="+encodeURIComponent(q));
+    const rows=(j.coins||[]).filter(x=>!stableCoin({symbol:x.symbol,name:x.name})).slice(0,12);
+    results.innerHTML=rows.map((x,i)=>`<div class="row"><span><b>${esc(sym(x.symbol))}</b> <small>${esc(x.name)}</small></span><button data-i="${i}">Add</button></div>`).join("")||'<div class="row"><small>No coins found.</small></div>';
+    results.querySelectorAll("[data-i]").forEach(btn=>btn.onclick=async()=>{const x=rows[+btn.dataset.i],c=await resolve({id:x.id,name:x.name,symbol:x.symbol.toUpperCase(),rank:null});if(!c){btn.textContent="No USDT market";return}if(!lists[view].some(y=>key(y)===key(c))){lists[view].push(c);write("crypto-watchlists-v14",lists)}search.value="";results.innerHTML="";await render()});
+  }catch(e){results.innerHTML='<div class="row"><small>Search unavailable.</small></div>'}
+}
+(async()=>{try{topCoins=await loadTop();await getMarkets();await render()}catch(e){console.error(e);grid.innerHTML='<div class="msg" style="padding:30px">Could not load the coin list. Please refresh the page.</div>'}})();
+</script></body></html>
