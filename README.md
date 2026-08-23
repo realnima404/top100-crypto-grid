@@ -1,11 +1,10 @@
-# Crypto Grid V12
-
-- Entire UI is English.
-- Fixed chart loading path: no blocking Binance exchangeInfo request before charts.
-- Coin list uses CoinGecko with Binance 24h fallback.
-- Each coin probes Binance directly and falls back to Bybit.
-- First charts begin loading as soon as the coin list is ready.
-- Chart instances persist across 15m / 1H / 4H switches.
-- Candle data is cached per exchange/pair/timeframe.
-- Dark theme, no chart grid lines, volume, 2-bar right offset, and hidden chart branding.
-- Header only contains: Top 100, Favorites, Daily Watchlist, Weekly Watchlist, Long-Term Watchlist, 15m, 1H, 4H.
+# Crypto Grid V13
+- Fixed chart loading path: one exchange-info map request instead of probing 100 markets individually.
+- Binance is primary; Bybit is fallback.
+- Lightweight Charts CDN has a jsDelivr fallback.
+- Watchlists have a search box in Daily / Weekly / Long-Term.
+- Search is not limited to Top 100; CoinGecko global search can find coins outside the Top 100.
+- Add search results directly to the currently selected watchlist.
+- Favorites can include coins from watchlists, not only Top 100.
+- English UI, dark theme, hidden chart branding, volume, no chart grid lines.
+- 15m / 1H / 4H chart instances persist and candle data is cached per timeframe.

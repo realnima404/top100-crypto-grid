@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Crypto Grid</title>
+<title>Crypto Grid V13</title>
 <script src="https://unpkg.com/lightweight-charts@5.0.0/dist/lightweight-charts.standalone.production.js"></script>
 <style>
 *{box-sizing:border-box}
@@ -16,6 +16,14 @@ header{position:sticky;top:0;z-index:50;background:#030507f7;border-bottom:1px s
 .nav button.active{background:#111d2b;border-color:#365778;color:#f0f5fb}
 .tf{display:flex;gap:3px;margin-left:auto}.tf button{min-width:42px;padding:7px 8px}
 .status{color:#596879;font-size:10px;margin-left:4px;display:none}
+.watch-tools{display:none;background:#070a0e;border-bottom:1px solid #11161d;padding:8px;gap:6px;align-items:center}
+.watch-tools.open{display:flex}
+.watch-tools input{flex:1;min-width:180px;background:#090d12;color:#d9e0ea;border:1px solid #1a2530;border-radius:6px;padding:8px}
+.search-results{position:absolute;left:8px;right:8px;top:43px;background:#080c11;border:1px solid #1c2632;border-radius:7px;z-index:60;max-height:320px;overflow:auto;display:none}
+.search-results.open{display:block}
+.search-row{display:flex;justify-content:space-between;align-items:center;padding:9px 10px;border-bottom:1px solid #111820}
+.search-row small{color:#657386}
+.search-row button{background:#101923;color:#dce7f4;border:1px solid #26374a;border-radius:5px;padding:5px 8px}
 .grid{display:grid;grid-template-columns:repeat(5,minmax(220px,1fr));gap:5px;padding:5px}
 .card{height:270px;background:#06090d;border:1px solid #111820;border-radius:6px;overflow:hidden}
 .head{height:32px;padding:5px 7px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #111820}
@@ -49,12 +57,18 @@ header{position:sticky;top:0;z-index:50;background:#030507f7;border-bottom:1px s
 </div>
 <span id="status" class="status">Loading…</span>
 </div>
+<div id="watchTools" class="watch-tools">
+  <input id="watchSearch" type="search" placeholder="Search any coin to add to this watchlist…" autocomplete="off">
+  <span id="watchHint"></span>
+  <div id="searchResults" class="search-results"></div>
+</div>
 </header>
 <main id="grid" class="grid"></main>
 
 <script>
 const grid=document.getElementById('grid'), status=document.getElementById('status');
-let view='top', timeframe='1h', topCoins=[], symbolMap=null;
+const watchTools=document.getElementById('watchTools'), watchSearch=document.getElementById('watchSearch'), searchResults=document.getElementById('searchResults');
+let view='top', timeframe='1h', topCoins=[], symbolMap=null, symbolMapPromise=null, searchTimer=null;
 const chartRecords=new Map(); // persistent chart instances
 const dataCache=new Map();
 const favorites=new Set(JSON.parse(localStorage.getItem('crypto_favorites_v11')||'[]'));
@@ -96,16 +110,80 @@ async function loadTop(){
 
 async function loadSymbolMap(){
   if(symbolMap)return symbolMap;
-  const map=new Map();
-  // Do not block first paint on exchangeInfo. Use a compact Bybit map only as fallback.
+  if(symbolMapPromise)return symbolMapPromise;
+  symbolMapPromise=
+function watchlistView(){return ['daily','weekly','long'].includes(view)}
+function updateWatchTools(){
+  const open=watchlistView();
+  watchTools.classList.toggle('open',open);
+  if(open){
+    const names={daily:'Daily Watchlist',weekly:'Weekly Watchlist',long:'Long-Term Watchlist'};
+    document.getElementById('watchHint').textContent=names[view];
+    watchSearch.value='';
+    searchResults.classList.remove('open'); searchResults.innerHTML='';
+  }
+}
+async function searchCoins(q){
+  if(!q || q.length<2){searchResults.classList.remove('open');return}
   try{
-    const j=await fetchJSON('https://api.bybit.com/v5/market/instruments-info?category=spot&limit=1000');
-    for(const x of j.result?.list||[]){
-      if(x.status==='Trading' && x.quoteCoin==='USDT' && !map.has(cleanSymbol(x.baseCoin)))
-        map.set(cleanSymbol(x.baseCoin),{exchange:'Bybit',pair:x.symbol});
-    }
-  }catch(e){ console.warn('Bybit map unavailable',e); }
-  symbolMap=map; return map;
+    const j=await fetchJSON('https://api.coingecko.com/api/v3/search?query='+encodeURIComponent(q));
+    const rows=(j.coins||[]).filter(x=>!isStable({symbol:x.symbol,name:x.name})).slice(0,12);
+    searchResults.innerHTML=rows.length?rows.map((x,i)=>`<div class="search-row"><span><b>${esc(x.symbol.toUpperCase())}</b> <small>${esc(x.name)}</small></span><button data-search-add="${i}">Add</button></div>`).join(''):'<div class="search-row"><small>No coins found</small></div>';
+    searchResults.classList.add('open');
+    document.querySelectorAll('[data-search-add]').forEach(btn=>btn.onclick=async()=>{
+      const x=rows[+btn.dataset.searchAdd];
+      const c=await resolveCoin({id:x.id,name:x.name,symbol:x.symbol.toUpperCase(),rank:null});
+      if(!c){btn.textContent='No market';return}
+      if(!lists[view].some(y=>coinKey(y)===coinKey(c))){
+        lists[view].push(c); saveLists();
+      }
+      searchResults.classList.remove('open'); watchSearch.value=''; render();
+    });
+  }catch(e){
+    searchResults.innerHTML='<div class="search-row"><small>Search unavailable right now</small></div>';
+    searchResults.classList.add('open');
+  }
+}
+watchSearch.addEventListener('input',e=>{
+  clearTimeout(searchTimer); const q=e.target.value.trim();
+  searchTimer=setTimeout(()=>searchCoins(q),220);
+});
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.watch-tools'))searchResults.classList.remove('open');
+});
+(async()=>{
+    const map=new Map();
+    // One exchange-info request is much faster than probing 100 symbols one-by-one.
+    try{
+      const j=await fetchJSON('https://api.binance.com/api/v3/exchangeInfo');
+      for(const x of j.symbols||[]){
+        if(x.status==='TRADING' && x.quoteAsset==='USDT') map.set(cleanSymbol(x.baseAsset),{exchange:'Binance',pair:x.symbol});
+      }
+      if(map.size){symbolMap=map;return map;}
+    }catch(e){console.warn('Binance exchangeInfo failed',e)}
+    try{
+      const j=await fetchJSON('https://api.bybit.com/v5/market/instruments-info?category=spot&limit=1000');
+      for(const x of j.result?.list||[]){
+        if(x.status==='Trading' && x.quoteCoin==='USDT' && !map.has(cleanSymbol(x.baseCoin)))
+          map.set(cleanSymbol(x.baseCoin),{exchange:'Bybit',pair:x.symbol});
+      }
+    }catch(e){console.warn('Bybit instruments failed',e)}
+    symbolMap=map; return map;
+  })();
+  return symbolMapPromise;
+}
+
+async function resolveCoin(c){
+  const map=await loadSymbolMap();
+  const sym=cleanSymbol(c.symbol);
+  if(map.has(sym)) return {...c,market:map.get(sym)};
+  // Some Binance markets can be checked directly if exchangeInfo was incomplete.
+  const pair=sym+'USDT';
+  try{
+    const r=await fetch('https://api.binance.com/api/v3/klines?symbol='+encodeURIComponent(pair)+'&interval=1h&limit=1');
+    if(r.ok)return {...c,market:{exchange:'Binance',pair}};
+  }catch{}
+  return null;
 }
 
 async function resolveCoin(c){
@@ -155,7 +233,10 @@ async function resolveCoins(arr){
 
 function listCoins(){
   if(view==='top') return topCoins;
-  if(view==='favorites') return topCoins.filter(c=>favorites.has(coinKey(c)));
+  if(view==='favorites'){
+    const pool=[...topCoins,...lists.daily,...lists.weekly,...lists.long];
+    const seen=new Set(); return pool.filter(c=>{const k=coinKey(c);if(seen.has(k)||!favorites.has(k))return false;seen.add(k);return true});
+  }
   return (lists[view]||[]).filter(c=>!isStable(c));
 }
 
@@ -231,6 +312,7 @@ async function render(){
 document.querySelectorAll('.view').forEach(b=>b.onclick=()=>{
   view=b.dataset.view;
   document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x===b));
+  updateWatchTools();
   render();
 });
 document.querySelectorAll('.tfb').forEach(b=>b.onclick=()=>{
@@ -243,7 +325,14 @@ document.querySelectorAll('.tfb').forEach(b=>b.onclick=()=>{
 
 (async()=>{
   try{
+    if(typeof LightweightCharts==='undefined'){
+      await new Promise((resolve,reject)=>{
+        const sc=document.createElement('script'); sc.src='https://cdn.jsdelivr.net/npm/lightweight-charts@5.0.0/dist/lightweight-charts.standalone.production.min.js';
+        sc.onload=resolve; sc.onerror=reject; document.head.appendChild(sc);
+      });
+    }
     topCoins=await loadTop();
+    updateWatchTools();
     await render();
   }catch(e){
     console.error(e); setStatus('Error loading data');
