@@ -1,3 +1,13 @@
-Crypto Grid V18 - based directly on the user-provided working chart version. Chart engine and direct Binance/Bybit loading preserved; UI and fixed watchlists simplified.
+# Crypto Grid V19
 
-V18.1: Added a remove (×) button to cards shown inside Daily, Weekly, and Long-Term Watchlists. No chart loading, speed, display, or other behavior changed.
+V19 keeps the working V18.1 chart architecture and only expands exchange coverage.
+
+Exchange fallback order:
+1. Binance
+2. Bybit
+3. OKX
+4. KuCoin
+5. Gate.io
+6. Bitget
+
+Each exchange is checked independently, so an outage in one exchange does not block the others. Watchlist deletion, UI, chart appearance, timeframe caching, lazy loading, volume, dark theme, and all other V18.1 behavior are retained.
