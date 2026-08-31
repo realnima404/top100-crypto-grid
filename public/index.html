@@ -79,74 +79,89 @@ async function getTop(){
   return j.filter(x=>!isStable(x.symbol,x.name)).map(x=>({id:x.id,rank:x.market_cap_rank,name:x.name,symbol:x.symbol.toUpperCase()}));
 }
 
+const EXCHANGES=["Binance","Bybit","OKX","KuCoin","Gate.io","Bitget"];
 async function exchangeMap(ex){
   if(exchangeMapCache[ex]) return exchangeMapCache[ex];
-  const urls={
-    Binance:"https://api.binance.com/api/v3/exchangeInfo",
-    Bybit:"https://api.bybit.com/v5/market/instruments-info?category=spot&limit=1000",
-    OKX:"https://www.okx.com/api/v5/public/instruments?instType=SPOT",
-    KuCoin:"https://api.kucoin.com/api/v2/symbols",
-    Gate:"https://api.gateio.ws/api/v4/spot/currency_pairs",
-    Bitget:"https://api.bitget.com/api/v2/spot/public/symbols"
-  };
-  const r=await fetch(urls[ex]); if(!r.ok) throw Error(ex+" instruments unavailable");
-  const j=await r.json(),m=new Map();
-  if(ex==="Binance") for(const x of j.symbols||[]) if(x.status==="TRADING"&&x.quoteAsset==="USDT")m.set(x.baseAsset.toUpperCase(),x.symbol);
-  if(ex==="Bybit") for(const x of j.result?.list||[]) if(x.status==="Trading"&&x.quoteCoin==="USDT")m.set(x.baseCoin.toUpperCase(),x.symbol);
-  if(ex==="OKX") for(const x of j.data||[]) if(x.state==="live"&&x.quoteCcy==="USDT")m.set(x.baseCcy.toUpperCase(),x.instId);
-  if(ex==="KuCoin") for(const x of j.data||[]) if(x.enableTrading&&x.quoteCurrency==="USDT")m.set(x.baseCurrency.toUpperCase(),x.symbol);
-  if(ex==="Gate") for(const x of j||[]) if(x.trade_status==="tradable"&&x.quote==="USDT")m.set(x.base.toUpperCase(),x.id);
-  if(ex==="Bitget") for(const x of j.data||[]) if(x.status==="online"&&x.quoteCoin==="USDT")m.set(x.baseCoin.toUpperCase(),x.symbol);
-  exchangeMapCache[ex]=m; return m;
+  try{
+    let url, parse;
+    if(ex==="Binance"){
+      url="https://api.binance.com/api/v3/exchangeInfo";
+      parse=j=>{const m=new Map();for(const x of j.symbols||[])if(x.status==="TRADING"&&x.quoteAsset==="USDT")m.set(x.baseAsset.toUpperCase(),x.symbol);return m};
+    }else if(ex==="Bybit"){
+      url="https://api.bybit.com/v5/market/instruments-info?category=spot&limit=1000";
+      parse=j=>{const m=new Map();for(const x of j.result?.list||[])if(x.status==="Trading"&&x.quoteCoin==="USDT")m.set(x.baseCoin.toUpperCase(),x.symbol);return m};
+    }else if(ex==="OKX"){
+      url="https://www.okx.com/api/v5/public/instruments?instType=SPOT";
+      parse=j=>{const m=new Map();for(const x of j.data||[])if(x.state==="live"&&x.quoteCcy==="USDT")m.set(x.baseCcy.toUpperCase(),x.instId);return m};
+    }else if(ex==="KuCoin"){
+      url="https://api.kucoin.com/api/v2/symbols";
+      parse=j=>{const m=new Map();for(const x of j.data||[])if(x.enableTrading&&x.quoteCurrency==="USDT")m.set(x.baseCurrency.toUpperCase(),x.symbol);return m};
+    }else if(ex==="Gate.io"){
+      url="https://api.gateio.ws/api/v4/spot/currency_pairs";
+      parse=j=>{const m=new Map();for(const x of j||[])if(x.trade_status==="tradable"&&x.quote==="USDT")m.set(x.base.toUpperCase(),x.id);return m};
+    }else{
+      url="https://api.bitget.com/api/v2/spot/public/symbols";
+      parse=j=>{const m=new Map();for(const x of j.data||[])if(x.status==="online"&&x.quoteCoin==="USDT")m.set(x.baseCoin.toUpperCase(),x.symbol);return m};
+    }
+    const r=await fetch(url);
+    if(!r.ok) throw Error(ex+" instruments unavailable");
+    const m=parse(await r.json());
+    exchangeMapCache[ex]=m;
+    return m;
+  }catch(e){
+    exchangeMapCache[ex]=new Map();
+    return exchangeMapCache[ex];
+  }
 }
-
 async function resolveCoin(c){
   if(c.pair&&c.exchange) return c;
-  const exs=["Binance","Bybit","OKX","KuCoin","Gate","Bitget"];
-  for(const ex of exs){
-    try{
-      const m=await exchangeMap(ex);
-      if(m.has(String(c.symbol).toUpperCase())) return {...c,exchange:ex,pair:m.get(String(c.symbol).toUpperCase())};
-    }catch(e){console.warn(ex,e)}
+  const symbol=String(c.symbol).toUpperCase();
+  for(const ex of EXCHANGES){
+    const m=await exchangeMap(ex);
+    if(m.has(symbol)) return {...c,exchange:ex,pair:m.get(symbol)};
   }
   return null;
 }
-
-function tfCfg(tf){
-  if(tf==="15m")return {bin:"15m",by:"15",okx:"15m",ku:"15min",gate:"15m",bitget:"15m"};
-  if(tf==="4h")return {bin:"4h",by:"240",okx:"4H",ku:"4hour",gate:"4h",bitget:"4H"};
-  return {bin:"1h",by:"60",okx:"1H",ku:"1hour",gate:"1h",bitget:"1H"};
-}
+function tfCfg(tf){return tf==="15m"?{bin:"15m",by:"15"}:tf==="4h"?{bin:"4h",by:"240"}:{bin:"1h",by:"60"}}
 async function fetchCandles(c){
   const cacheKey=`${c.exchange}|${c.pair}|${currentTf}`;
-  const hit=chartDataCache.get(cacheKey); if(hit) return hit;
-  const cfg=tfCfg(currentTf);
-  const enc=encodeURIComponent(c.pair);
-  let url, rowsRaw;
-  if(c.exchange==="Binance") url=`https://api.binance.com/api/v3/klines?symbol=${enc}&interval=${cfg.bin}&limit=200`;
-  else if(c.exchange==="Bybit") url=`https://api.bybit.com/v5/market/kline?category=spot&symbol=${enc}&interval=${cfg.by}&limit=200`;
-  else if(c.exchange==="OKX") url=`https://www.okx.com/api/v5/market/candles?instId=${enc}&bar=${cfg.okx}&limit=200`;
-  else if(c.exchange==="KuCoin") url=`https://api.kucoin.com/api/v1/market/candles?type=${cfg.ku}&symbol=${enc}`;
-  else if(c.exchange==="Gate") url=`https://api.gateio.ws/api/v4/spot/candlesticks?currency_pair=${enc}&interval=${cfg.gate}&limit=200`;
-  else if(c.exchange==="Bitget") url=`https://api.bitget.com/api/v2/spot/market/candles?symbol=${enc}&granularity=${cfg.bitget}&limit=200`;
-  else throw Error("Unsupported exchange");
-  const r=await fetch(url); if(!r.ok) throw Error("Market data unavailable");
+  const hit=chartDataCache.get(cacheKey);
+  if(hit) return hit;
+
+  let url, parser;
+  if(c.exchange==="Binance"){
+    const cfg=tfCfg(currentTf);
+    url=`https://api.binance.com/api/v3/klines?symbol=${encodeURIComponent(c.pair)}&interval=${cfg.bin}&limit=200`;
+    parser=j=>(j||[]).map(x=>({time:Math.floor(+x[0]/1000),open:+x[1],high:+x[2],low:+x[3],close:+x[4],volume:+x[5]}));
+  }else if(c.exchange==="Bybit"){
+    const cfg=tfCfg(currentTf);
+    url=`https://api.bybit.com/v5/market/kline?category=spot&symbol=${encodeURIComponent(c.pair)}&interval=${cfg.by}&limit=200`;
+    parser=j=>(j.result?.list||[]).map(x=>({time:Math.floor(+x[0]/1000),open:+x[1],high:+x[2],low:+x[3],close:+x[4],volume:+x[5]}));
+  }else if(c.exchange==="OKX"){
+    const bar=currentTf==="15m"?"15m":currentTf==="4h"?"4H":"1H";
+    url=`https://www.okx.com/api/v5/market/candles?instId=${encodeURIComponent(c.pair)}&bar=${bar}&limit=200`;
+    parser=j=>(j.data||[]).map(x=>({time:Math.floor(+x[0]/1000),open:+x[1],high:+x[2],low:+x[3],close:+x[4],volume:+x[5]}));
+  }else if(c.exchange==="KuCoin"){
+    const type=currentTf==="15m"?"15min":currentTf==="4h"?"4hour":"1hour";
+    url=`https://api.kucoin.com/api/v1/market/candles?symbol=${encodeURIComponent(c.pair)}&type=${type}`;
+    parser=j=>(j.data||[]).map(x=>({time:+x[0],open:+x[1],close:+x[2],high:+x[3],low:+x[4],volume:+x[5]}));
+  }else if(c.exchange==="Gate.io"){
+    const interval=currentTf==="15m"?"15m":currentTf==="4h"?"4h":"1h";
+    url=`https://api.gateio.ws/api/v4/spot/candlesticks?currency_pair=${encodeURIComponent(c.pair)}&interval=${interval}&limit=200`;
+    parser=j=>(j||[]).map(x=>({time:+x[0],volume:+x[1],close:+x[2],high:+x[3],low:+x[4],open:+x[5]}));
+  }else{
+    const gran=currentTf==="15m"?"15min":currentTf==="4h"?"4H":"1H";
+    url=`https://api.bitget.com/api/v2/spot/market/candles?symbol=${encodeURIComponent(c.pair)}&granularity=${gran}&limit=200`;
+    parser=j=>(j.data||[]).map(x=>({time:Math.floor(+x[0]/1000),open:+x[1],high:+x[2],low:+x[3],close:+x[4],volume:+x[5]}));
+  }
+
+  const r=await fetch(url);
+  if(!r.ok) throw Error("Market data unavailable");
   const j=await r.json();
-  if(c.exchange==="Binance") rowsRaw=j;
-  else if(c.exchange==="Bybit") rowsRaw=j.result?.list||[];
-  else if(c.exchange==="OKX") rowsRaw=j.data||[];
-  else if(c.exchange==="KuCoin") rowsRaw=j.data||[];
-  else if(c.exchange==="Gate") rowsRaw=j||[];
-  else rowsRaw=j.data||[];
-  if(!Array.isArray(rowsRaw)||!rowsRaw.length) throw Error("Market data unavailable");
-  let rows;
-  if(c.exchange==="Gate") rows=rowsRaw.map(x=>({time:+x[0],volume:+x[1],close:+x[2],high:+x[3],low:+x[4],open:+x[5]}));
-  else if(c.exchange==="Bitget") rows=rowsRaw.map(x=>({time:+x[0]/1000,open:+x[1],high:+x[2],low:+x[3],close:+x[4],volume:+x[5]}));
-  else if(c.exchange==="KuCoin") rows=rowsRaw.map(x=>({time:+x[0],open:+x[1],close:+x[2],high:+x[3],low:+x[4],volume:+x[5]}));
-  else rows=rowsRaw.map(x=>({time:Math.floor(+x[0]/1000),open:+x[1],high:+x[2],low:+x[3],close:+x[4],volume:+x[5]}));
-  rows=rows.filter(x=>Number.isFinite(x.time)&&Number.isFinite(x.close)).sort((a,b)=>a.time-b.time);
+  const rows=parser(j).sort((a,b)=>a.time-b.time);
   if(!rows.length) throw Error("Market data unavailable");
-  chartDataCache.set(cacheKey,rows); return rows;
+  chartDataCache.set(cacheKey,rows);
+  return rows;
 }
 
 function makeCard(c){
@@ -160,6 +175,7 @@ function makeCard(c){
     const ls=lists(),k=coinKey(c);
     ls[currentView]=(ls[currentView]||[]).filter(x=>coinKey(x)!==k);
     saveLists(ls);
+    chartDomCache.delete(`${k}|${currentTf}`);
     card.remove();
     if(!grid.querySelector(".card")) grid.innerHTML='<div class="msg" style="height:120px">No coins in this watchlist yet.</div>';
   };
@@ -171,7 +187,7 @@ async function initChart(card){
   card.dataset.loading="1";
   try{
     const c=await resolveCoin(card._coin);
-    if(!c){card.remove();return}
+    if(!c){card.querySelector(".exchange").textContent="No supported market";card.querySelector(".chart").innerHTML='<div class="msg">No supported USDT market</div>';return}
     card._coin=c; card.querySelector(".exchange").textContent=c.exchange;
     const box=card.querySelector(".chart"); box.innerHTML="";
     const chart=LightweightCharts.createChart(box,{width:box.clientWidth,height:box.clientHeight,layout:{background:{type:"solid",color:"#080b10"},textColor:"#6f7d90"},grid:{vertLines:{visible:false},horzLines:{visible:false}},rightPriceScale:{borderColor:"#161c25",scaleMargins:{top:.08,bottom:.30}},timeScale:{borderColor:"#161c25",timeVisible:true,secondsVisible:false,rightOffset:2,barSpacing:6},crosshair:{mode:2,vertLine:{visible:false},horzLine:{visible:false}},attributionLogo:false});
@@ -286,8 +302,7 @@ async function searchCoins(q){
       .map(x=>({id:x.id,name:x.name,symbol:String(x.symbol).toUpperCase(),rank:x.market_cap_rank||null}));
     results.innerHTML=found.length?found.map((c,i)=>`<div class="search-item"><span><b>${esc(c.symbol)}</b> <small>${esc(c.name)}</small></span><button data-add="${i}">Add</button></div>`).join(""):'<div class="msg" style="height:55px">No results</div>';
     results.querySelectorAll("[data-add]").forEach(b=>b.onclick=async()=>{
-      const c=await resolveCoin(found[+b.dataset.add]);
-      if(!c){alert("This coin has no supported USDT market on the available exchanges.");return}
+      const c=found[+b.dataset.add];
       const ls=lists();ls[currentView]=ls[currentView]||[];
       if(!ls[currentView].some(x=>coinKey(x)===coinKey(c)))ls[currentView].push(c);
       saveLists(ls);
